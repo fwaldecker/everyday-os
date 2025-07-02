@@ -1,0 +1,101 @@
+# Global configuration
+{
+    email {$LETSENCRYPT_EMAIL}
+    acme_ca {$ACME_CA}
+    acme_dns {$ACME_DNS}
+    admin {$ADMIN_EMAIL}
+}
+
+# Main domain redirect
+{$BASE_DOMAIN} {
+    redir https://n8n.{$BASE_DOMAIN}
+}
+
+# n8n
+n8n.{$BASE_DOMAIN} {
+    # Handle ACME challenge
+    tls {
+        dns {$ACME_DNS}
+    }
+    
+    reverse_proxy n8n:5678 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# MinIO Console
+minio.{$BASE_DOMAIN} {
+    # Handle ACME challenge
+    tls {
+        dns {$ACME_DNS}
+    }
+    
+    reverse_proxy minio:9001 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# Supabase
+supabase.{$BASE_DOMAIN} {
+    reverse_proxy supabase-kong:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# Neo4j Browser
+neo4j.{$BASE_DOMAIN} {
+    reverse_proxy neo4j:7474 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# Langfuse
+langfuse.{$BASE_DOMAIN} {
+    reverse_proxy langfuse:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# NCA Toolkit
+nca.{$BASE_DOMAIN} {
+    # Handle ACME challenge
+    tls {
+        dns {$ACME_DNS}
+    }
+    
+    reverse_proxy nca-toolkit:8010 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# Handle ACME challenge for all subdomains
+*.{$BASE_DOMAIN} {
+    tls {
+        dns {$ACME_DNS}
+    }
+    
+    @acme path /acme-challenge/*
+    handle @acme {
+        respond "ACME challenge" 200
+    }
+    
+    respond 404
+}

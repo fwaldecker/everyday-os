@@ -1,14 +1,256 @@
-# Self-hosted AI Package
+# Everyday-OS: Self-hosted AI and Automation Platform
 
-**Self-hosted AI Package** is an open, docker compose template that
-quickly bootstraps a fully featured Local AI and Low Code development
-environment including Ollama for your local LLMs, Open WebUI for an interface to chat with your N8N agents, and Supabase for your database, vector store, and authentication. 
+**Everyday-OS** is a comprehensive, self-hosted platform that combines powerful AI tools with automation capabilities. Built with Docker Compose, it provides a complete ecosystem for AI development, data processing, and workflow automation.
 
-This is Cole's version with a couple of improvements and the addition of Supabase, Open WebUI, Flowise, Neo4j, Langfuse, SearXNG, and Caddy!
-Also, the local RAG AI Agent workflows from the video will be automatically in your 
-n8n instance if you use this setup instead of the base one provided by n8n!
+## 🚀 Key Features
 
-**IMPORANT**: Supabase has updated a couple environment variables so you may have to add some new default values in your .env that I have in my .env.example if you have had this project up and running already and are just pulling new changes. Specifically, you need to add "POOLER_DB_POOL_SIZE=5" to your .env. This is required if you have had the package running before June 14th.
+- **AI & Machine Learning**
+  - Local LLMs with Ollama
+  - Vector databases for semantic search
+  - AI workflow automation with n8n
+  - Model observability with Langfuse
+
+- **Data & Storage**
+  - Supabase for database and authentication
+  - MinIO for object storage (S3-compatible)
+  - Neo4j for graph database and knowledge graphs
+  - SearXNG for private, ad-free web search
+
+- **Development & Automation**
+  - n8n for visual workflow automation
+  - Open WebUI for interacting with LLMs
+  - Caddy reverse proxy with automatic HTTPS
+  - Comprehensive API ecosystem
+
+- **Security & Operations**
+  - Automatic SSL certificates
+  - Fine-grained access control
+  - Service health monitoring
+  - Secure credential management
+
+## 📦 What's Included
+
+- **Core Services**
+  - [n8n](https://n8n.io/): Workflow automation
+  - [Supabase](https://supabase.com/): Database & Auth
+  - [MinIO](https://min.io/): S3-compatible storage
+  - [Neo4j](https://neo4j.com/): Graph database
+  - [SearXNG](https://searxng.org/): Private web search
+  - [Langfuse](https://langfuse.com/): LLM observability
+  - [Caddy](https://caddyserver.com/): Reverse proxy & HTTPS
+
+- **AI Components**
+  - [Ollama](https://ollama.com/): Local LLMs
+  - [Open WebUI](https://openwebui.com/): Chat interface
+  - Vector search capabilities
+  - Pre-configured AI workflows
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Docker 20.10.0+
+- Docker Compose 2.0.0+
+- Python 3.8+
+- 8GB+ RAM (16GB recommended)
+- 50GB+ free disk space
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/everyday-os.git
+   cd everyday-os
+   ```
+
+2. Copy the example environment file and update with your configuration:
+   ```bash
+   cp .env.example .env
+   nano .env  # Edit with your settings
+   ```
+
+3. Start the services:
+   ```bash
+   python start_services.py
+   ```
+
+4. Access the services:
+   - n8n: `https://n8n.yourdomain.com`
+   - MinIO Console: `https://minio.yourdomain.com`
+   - Supabase Studio: `https://db.yourdomain.com`
+   - Open WebUI: `https://chat.yourdomain.com`
+   - SearXNG: `https://search.yourdomain.com`
+
+## 🌐 Domain Configuration
+
+### DNS Records
+
+Create the following DNS A records pointing to your server's IP address:
+
+| Type | Name       | Value              | TTL  |
+|------|------------|--------------------|------|
+| A    | @          | your.server.ip.addr | 3600 |
+| A    | n8n        | your.server.ip.addr | 3600 |
+| A    | minio      | your.server.ip.addr | 3600 |
+| A    | db         | your.server.ip.addr | 3600 |
+| A    | chat       | your.server.ip.addr | 3600 |
+| A    | search     | your.server.ip.addr | 3600 |
+| A    | langfuse   | your.server.ip.addr | 3600 |
+| A    | nca        | your.server.ip.addr | 3600 |
+
+### Environment Variables
+
+Update these key variables in your `.env` file:
+
+```bash
+# Base domain (e.g., example.com or subdomain.yourdomain.com)
+BASE_DOMAIN=yourdomain.com
+
+# Protocol (http or https)
+PROTOCOL=https
+
+# Server IP Address (for DNS records)
+SERVER_IP=your.server.ip.addr
+
+# MinIO credentials
+MINIO_ROOT_USER=admin
+MINIO_ROOT_PASSWORD=your-secure-password
+
+# Supabase secrets
+POSTGRES_PASSWORD=your-secure-password
+JWT_SECRET=$(openssl rand -hex 32)
+ANON_KEY=your-supabase-anon-key
+SERVICE_ROLE_KEY=your-supabase-service-role-key
+```
+
+## 🔒 Security
+
+### Default Credentials
+
+- **MinIO Console**:
+  - Username: `admin` (or as set in `.env`)
+  - Password: (set in `.env` as `MINIO_ROOT_PASSWORD`)
+
+- **Supabase**:
+  - Database credentials are in `.env`
+  - JWT secret is auto-generated if not set
+
+### Best Practices
+
+1. Change all default credentials
+2. Use strong, unique passwords
+3. Enable 2FA where possible
+4. Regularly update the services
+5. Monitor service logs
+6. Use a firewall (UFW recommended)
+7. Regular backups
+
+## 🛠️ Management
+
+### Service Management
+
+- Start services: `python start_services.py`
+- Stop services: `python start_services.py --reset`
+- Check service status: `docker compose -p everyday-os ps`
+
+### Backups
+
+Database backups are stored in `./backups` by default. To create a manual backup:
+
+```bash
+# Create a backup of all databases
+./scripts/backup.sh
+```
+
+### Updates
+
+To update to the latest version:
+
+```bash
+git pull
+python start_services.py --reset
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) before submitting pull requests.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [n8n](https://n8n.io/) for the amazing workflow automation platform
+- [Supabase](https://supabase.com/) for the open source Firebase alternative
+- [Ollama](https://ollama.com/) for making local LLMs accessible
+- [Open WebUI](https://openwebui.com/) for the beautiful chat interface
+- [MinIO](https://min.io/) for S3-compatible storage
+- [Neo4j](https://neo4j.com/) for graph database capabilities
+- [SearXNG](https://searxng.org/) for private web search
+- [Langfuse](https://langfuse.com/) for LLM observability
+
+## 🌐 Domain and DNS Configuration
+
+### 1. DNS Records Setup
+
+You'll need to create the following DNS A records pointing to your server's IP address:
+
+| Type  | Name        | Value               | TTL     |
+|-------|-------------|---------------------|---------|
+| A     | @           | your.server.ip.addr | 3600    |
+| A     | n8n        | your.server.ip.addr | 3600    |
+| A     | minio      | your.server.ip.addr | 3600    |
+| A     | supabase   | your.server.ip.addr | 3600    |
+| A     | neo4j      | your.server.ip.addr | 3600    |
+| A     | langfuse   | your.server.ip.addr | 3600    |
+| A     | nca        | your.server.ip.addr | 3600    |
+
+Replace `your.server.ip.addr` with your actual server IP address.
+
+### 2. Domain Configuration
+
+1. Set your domain in the `.env` file:
+   ```bash
+   # Base domain (e.g., example.com or client.yourdomain.com)
+   BASE_DOMAIN=yourdomain.com
+   
+   # Protocol (http or https)
+   PROTOCOL=https
+   
+   # Server IP Address (for DNS records)
+   SERVER_IP=your.server.ip.addr
+   ```
+
+2. Update these environment variables in your deployment environment.
+
+### 3. SSL Certificates
+
+Caddy will automatically obtain and renew SSL certificates from Let's Encrypt. Make sure:
+- Ports 80 and 443 are open in your firewall
+- Your domain's DNS has propagated
+- The domain resolves to your server's IP address
+
+## 🔐 Setting Up Credentials
+
+### Credentials Configuration
+
+1. **Create `credentials.json`**:
+   - Copy the template file: `cp n8n/backup/credentials.template.json n8n/backup/credentials.json`
+   - Edit the file and replace all placeholder values with your actual API keys and credentials
+
+2. **Required Services**:
+   - **Telegram Bot** (if using Telegram integration)
+   - **OpenAI API** (for AI capabilities)
+   - **Google Services** (if using Google Docs/Drive integration)
+   - **Supabase** (for database and authentication)
+   - **Other services** as needed for your workflows
+
+3. **Security Notes**:
+   - Never commit `credentials.json` to version control (it's in .gitignore)
+   - Use environment variables for sensitive data in production
+   - Rotate API keys regularly
+   - Restrict API key permissions to minimum required scopes
 
 ## Important Links
 

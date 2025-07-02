@@ -1,102 +1,242 @@
 {
     # Global options - works for both environments
     email {$LETSENCRYPT_EMAIL}
+    # Enable automatic HTTPS (disabled for local development)
+    # auto_https disable_redirects
+    # debug
 }
 
-# N8N
+# Default security headers
+(security_headers) {
+    header {
+        # Security Headers
+        # Enable HSTS (comment out for local development)
+        # Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+        
+        # Clickjacking protection
+        X-Frame-Options "DENY"
+        
+        # XSS protection
+        X-XSS-Protection "1; mode=block"
+        
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Permissions Policy
+        Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+        
+        # Remove Server header
+        -Server
+    }
+}
+
+# N8N - Workflow Automation
 {$N8N_HOSTNAME} {
-    # For domains, Caddy will automatically use Let's Encrypt
-    # For localhost/port addresses, HTTPS won't be enabled
-    reverse_proxy n8n:5678
+    import security_headers
+    
+    # Logging
+    log {
+        output file /var/log/caddy/n8n.access.log {
+            roll_size 10MB
+            roll_keep 5
+        }
+    }
+    
+    reverse_proxy n8n:5678 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
 }
 
-# Open WebUI
+# Open WebUI - AI Chat Interface
 {$WEBUI_HOSTNAME} {
-    reverse_proxy open-webui:8080
+    import security_headers
+    
+    # Add CSP for WebUI
+    header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.openai.com https://api.anthropic.com;"
+    
+    reverse_proxy open-webui:8080 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
 }
 
-# Flowise
-{$FLOWISE_HOSTNAME} {
-    reverse_proxy flowise:3001
-}
-
-# Langfuse
+# Langfuse - LLM Observability
 {$LANGFUSE_HOSTNAME} {
-    reverse_proxy langfuse-web:3000
+    import security_headers
+    
+    # Langfuse needs these headers for proper functionality
+    header Access-Control-Allow-Origin "*"
+    
+    reverse_proxy langfuse-web:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
 }
 
-# # Ollama API
-# {$OLLAMA_HOSTNAME} {
-#     reverse_proxy ollama:11434
-# }
-
-# Supabase
+# Supabase - Backend as a Service
 {$SUPABASE_HOSTNAME} {
-    reverse_proxy kong:8000
+    import security_headers
+    
+    # Supabase needs these CORS headers
+    header Access-Control-Allow-Origin "*"
+    header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    header Access-Control-Allow-Headers "*"
+    
+    reverse_proxy kong:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
 }
 
-# Neo4j
+# NCA Toolkit - Document Processing
+{$NCA_HOSTNAME} {
+    import security_headers
+    
+    reverse_proxy nca-toolkit:8010 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# MinIO Console
+{$MINIO_CONSOLE_HOSTNAME} {
+    import security_headers
+    
+    # MinIO Console needs these headers
+    header X-Content-Type-Options "nosniff"
+    header X-XSS-Protection "1; mode=block"
+    
+    reverse_proxy minio:9001 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# MinIO API
+{$MINIO_API_HOSTNAME} {
+    import security_headers
+    
+    # MinIO API needs these headers
+    header X-Content-Type-Options "nosniff"
+    
+    reverse_proxy minio:9000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+# SearXNG - Privacy-focused search engine
+{$SEARXNG_HOSTNAME} {
+    import security_headers
+    
+    # Enable compression
+    encode zstd gzip
+    
+    # Define path matchers
+    @api {
+        path /config
+        path /healthz
+        path /stats/errors
+        path /stats/checker
+    }
+    
+    @search {
+        path /search
+    }
+    
+    @imageproxy {
+        path /image_proxy
+    }
+    
+    @static {
+        path /static/*
+    }
+    
+    # Security headers
+    header {
+        # Content Security Policy
+        Content-Security-Policy "
+            default-src 'none';
+            script-src 'self' 'unsafe-inline' 'unsafe-eval';
+            style-src 'self' 'unsafe-inline';
+            img-src * data:;
+            font-src 'self' data:;
+            connect-src 'self' https://overpass-api.de;
+            frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com;
+            form-action 'self' https://github.com/searxng/searxng/issues/new;
+            base-uri 'self';
+            frame-ancestors 'self';
+        "
+        
+        # Disable some browser features
+        Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+        
+        # Set referrer policy
+        Referrer-Policy "no-referrer"
+        
+        # Force clients to use HTTPS
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        
+        # X-Robots-Tag (comment to allow site indexing)
+        X-Robots-Tag "noindex, noarchive, nofollow"
+    }
+    
+    # CORS for API endpoints
+    header @api {
+        Access-Control-Allow-Methods "GET, OPTIONS"
+        Access-Control-Allow-Origin "*"
+    }
+    
+    # Cache policy
+    route {
+        header Cache-Control "max-age=0, no-store"
+        header @search Cache-Control "max-age=5, private"
+        header @imageproxy Cache-Control "max-age=604800, public"
+        header @static Cache-Control "max-age=31536000, public, immutable"
+    }
+    
+    # Reverse proxy to SearXNG
+    reverse_proxy searxng:8080 {
+        header_up X-Forwarded-Port {http.request.port}
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-For {http.request.remote.host}
+        header_up X-Forwarded-Proto {http.request.scheme}
+        header_up Connection "close"
+    }
+}
+
+# Neo4j Browser
 {$NEO4J_HOSTNAME} {
-    reverse_proxy neo4j:7474
+    import security_headers
+    
+    # Neo4j Browser needs these headers
+    header Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' wss://* ws://*; img-src 'self' data:;"
+    
+    reverse_proxy neo4j:7474 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
 }
 
+# Import additional Caddy configurations
 import /etc/caddy/addons/*.conf
-
-# # SearXNG
-# {$SEARXNG_HOSTNAME} {
-#     encode zstd gzip
-    
-#     @api {
-#         path /config
-#         path /healthz
-#         path /stats/errors
-#         path /stats/checker
-#     }
-#     @search {
-#         path /search
-#     }
-#     @imageproxy {
-#         path /image_proxy
-#     }
-#     @static {
-#         path /static/*
-#     }
-    
-#     header {
-#         # CSP (https://content-security-policy.com)
-#         Content-Security-Policy "upgrade-insecure-requests; default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self' https://github.com/searxng/searxng/issues/new; font-src 'self'; frame-ancestors 'self'; base-uri 'self'; connect-src 'self' https://overpass-api.de; img-src * data:; frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://www.dailymotion.com https://www.deezer.com https://www.mixcloud.com https://w.soundcloud.com https://embed.spotify.com;"
-#         # Disable some browser features
-#         Permissions-Policy "accelerometer=(),camera=(),geolocation=(),gyroscope=(),magnetometer=(),microphone=(),payment=(),usb=()"
-#         # Set referrer policy
-#         Referrer-Policy "no-referrer"
-#         # Force clients to use HTTPS
-#         Strict-Transport-Security "max-age=31536000"
-#         # Prevent MIME type sniffing from the declared Content-Type
-#         X-Content-Type-Options "nosniff"
-#         # X-Robots-Tag (comment to allow site indexing)
-#         X-Robots-Tag "noindex, noarchive, nofollow"
-#         # Remove "Server" header
-#         -Server
-#     }
-    
-#     header @api {
-#         Access-Control-Allow-Methods "GET, OPTIONS"
-#         Access-Control-Allow-Origin "*"
-#     }
-    
-#     route {
-#         # Cache policy
-#         header Cache-Control "max-age=0, no-store"
-#         header @search Cache-Control "max-age=5, private"
-#         header @imageproxy Cache-Control "max-age=604800, public"
-#         header @static Cache-Control "max-age=31536000, public, immutable"
-#     }
-    
-#     # SearXNG (uWSGI)
-#     reverse_proxy searxng:8080 {
-#         header_up X-Forwarded-Port {http.request.port}
-#         header_up X-Real-IP {http.request.remote.host}
-#         # https://github.com/searx/searx-docker/issues/24
-#         header_up Connection "close"
-#     }
-# }

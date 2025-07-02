@@ -1,8 +1,32 @@
+# Environment files
 .env
+.env.*
+!.env.example
+
+# Credentials
+n8n/backup/credentials.json
+
+# Local development directories
 volumes/
 shared/
 neo4j/
 shared-backup/
-.env.test
+
+# Application specific
 searxng/settings.yml
 searxng/uwsgi*
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

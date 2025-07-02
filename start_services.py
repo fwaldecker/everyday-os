@@ -2,9 +2,14 @@
 """
 start_services.py
 
-This script starts the Supabase stack first, waits for it to initialize, and then starts
-the local AI stack. Both stacks use the same Docker Compose project name ("localai")
-so they appear together in Docker Desktop.
+This script manages the Everyday-OS Docker Compose environment, including:
+- Supabase backend services
+- AI/ML services (N8N, Langfuse, etc.)
+- Storage services (MinIO)
+- Search and analytics services (SearXNG, Neo4j)
+- Web interfaces and APIs
+
+All services are managed under the same Docker Compose project ("everyday-os").
 """
 
 import os
@@ -14,20 +19,107 @@ import time
 import argparse
 import platform
 import sys
+import json
+from pathlib import Path
 
-def run_command(cmd, cwd=None):
+# Project configuration
+PROJECT_NAME = "everyday-os"
+DEFAULT_ENV_FILE = ".env"
+DOCKER_COMPOSE_FILE = "docker/docker-compose.yml"
+DOCKER_COMPOSE_OVERRIDE = "docker/docker-compose.override.yml"
+DOCKER_COMPOSE_PROD = "docker/docker-compose.prod.yml"
+
+def run_command(cmd, cwd=None, check=True, capture_output=False):
     """Run a shell command and print it."""
     print("Running:", " ".join(cmd))
-    subprocess.run(cmd, cwd=cwd, check=True)
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=cwd,
+            check=check,
+            capture_output=capture_output,
+            text=True
+        )
+        if result.returncode != 0 and check:
+            print(f"Command failed with return code {result.returncode}")
+            if result.stderr:
+                print("Error:", result.stderr.strip())
+            return None
+        return result
+    except subprocess.CalledProcessError as e:
+        print(f"Command failed with error: {e}")
+        if e.stderr:
+            print("Error output:", e.stderr.strip())
+        if e.stdout:
+            print("Output:", e.stdout.strip())
+        return None
+    except Exception as e:
+        print(f"Unexpected error running command: {e}")
+        return None
+
+def check_docker():
+    """Check if Docker is running and accessible."""
+    print("Checking Docker installation...")
+    result = run_command(["docker", "--version"], check=False)
+    if not result or result.returncode != 0:
+        print("Error: Docker is not installed or not running. Please install Docker and start the Docker daemon.")
+        sys.exit(1)
+    
+    print("Checking Docker Compose...")
+    result = run_command(["docker", "compose", "version"], check=False)
+    if not result or result.returncode != 0:
+        print("Error: Docker Compose is not installed. Please install Docker Compose v2 or later.")
+        sys.exit(1)
+
+def check_requirements():
+    """Check system requirements and dependencies."""
+    print("Checking system requirements...")
+    
+    # Check Python version
+    if sys.version_info < (3, 8):
+        print("Error: Python 3.8 or higher is required.")
+        sys.exit(1)
+    
+    # Check for required environment variables
+    required_vars = ["BASE_DOMAIN", "PROTOCOL", "SERVER_IP"]
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        print(f"Error: The following required environment variables are not set: {', '.join(missing_vars)}")
+        print("Please set these variables in your .env file or environment.")
+        sys.exit(1)
+
+def setup_environment():
+    """Set up the environment for the application."""
+    print("Setting up environment...")
+    
+    # Create necessary directories
+    os.makedirs("docker/data/minio", exist_ok=True)
+    os.makedirs("docker/data/neo4j", exist_ok=True)
+    os.makedirs("docker/data/postgres", exist_ok=True)
+    os.makedirs("docker/data/redis", exist_ok=True)
+    os.makedirs("docker/data/clickhouse", exist_ok=True)
+    os.makedirs("docker/logs/caddy", exist_ok=True)
+    os.makedirs("docker/logs/n8n", exist_ok=True)
+    
+    # Set permissions (important for Linux/macOS)
+    if platform.system() != "Windows":
+        run_command(["chmod", "-R", "777", "docker/data"], check=False)
+        run_command(["chmod", "-R", "777", "docker/logs"], check=False)
 
 def clone_supabase_repo():
     """Clone the Supabase repository using sparse checkout if not already present."""
     if not os.path.exists("supabase"):
         print("Cloning the Supabase repository...")
-        run_command([
+        result = run_command([
             "git", "clone", "--filter=blob:none", "--no-checkout",
+            "--depth=1", "--single-branch", "--branch=master",
             "https://github.com/supabase/supabase.git"
         ])
+        if not result:
+            print("Failed to clone Supabase repository.")
+            sys.exit(1)
+            
         os.chdir("supabase")
         run_command(["git", "sparse-checkout", "init", "--cone"])
         run_command(["git", "sparse-checkout", "set", "docker"])
@@ -40,121 +132,201 @@ def clone_supabase_repo():
         os.chdir("..")
 
 def prepare_supabase_env():
-    """Copy .env to .env in supabase/docker."""
+    """Prepare the Supabase environment by copying .env and setting up necessary files."""
+    # Create .env in supabase/docker if it doesn't exist
     env_path = os.path.join("supabase", "docker", ".env")
     env_example_path = os.path.join(".env")
-    print("Copying .env in root to .env in supabase/docker...")
-    shutil.copyfile(env_example_path, env_path)
+    
+    if not os.path.exists(env_path) and os.path.exists(env_example_path):
+        print("Copying .env to supabase/docker/.env...")
+        shutil.copyfile(env_example_path, env_path)
+    
+    # Ensure the .env file has the correct permissions
+    if os.path.exists(env_path) and platform.system() != "Windows":
+        os.chmod(env_path, 0o600)
 
-def stop_existing_containers(profile=None):
-    print("Stopping and removing existing containers for the unified project 'localai'...")
-    cmd = ["docker", "compose", "-p", "localai"]
-    if profile and profile != "none":
-        cmd.extend(["--profile", profile])
-    cmd.extend(["-f", "docker-compose.yml", "down"])
-    run_command(cmd)
+def stop_existing_containers(project_name=PROJECT_NAME):
+    """Stop and remove existing containers for the project."""
+    print(f"Stopping and removing existing containers for project '{project_name}'...")
+    run_command(["docker", "compose", "-p", project_name, "down", "--remove-orphans"], check=False)
 
 def start_supabase(environment=None):
-    """Start the Supabase services (using its compose file)."""
+    """Start the Supabase services."""
     print("Starting Supabase services...")
-    cmd = ["docker", "compose", "-p", "localai", "-f", "supabase/docker/docker-compose.yml"]
-    if environment and environment == "public":
-        cmd.extend(["-f", "docker-compose.override.public.supabase.yml"])
-    cmd.extend(["up", "-d"])
-    run_command(cmd)
+    
+    # Change to the supabase/docker directory
+    supabase_dir = os.path.join("supabase", "docker")
+    if not os.path.exists(supabase_dir):
+        print(f"Error: Supabase directory not found at {supabase_dir}")
+        sys.exit(1)
+    
+    # Build and start Supabase services
+    cmd = ["docker", "compose", "-p", PROJECT_NAME, "up", "-d"]
+    if environment and environment != "development":
+        cmd.extend(["--profile", environment])
+    
+    result = run_command(cmd, cwd=supabase_dir)
+    if not result or result.returncode != 0:
+        print("Failed to start Supabase services.")
+        return False
+    
+    print("Waiting for Supabase to initialize...")
+    time.sleep(10)  # Give services time to start
+    return True
 
-def start_local_ai(profile=None, environment=None):
-    """Start the local AI services (using its compose file)."""
-    print("Starting local AI services...")
-    cmd = ["docker", "compose", "-p", "localai"]
+def start_services(profile=None, environment=None):
+    """Start all services for the Everyday-OS."""
+    print("Starting Everyday-OS services...")
+    
+    # Build the Docker Compose command
+    cmd = [
+        "docker", "compose",
+        "-f", DOCKER_COMPOSE_FILE,
+    ]
+    
+    # Add override files if they exist
+    if os.path.exists(DOCKER_COMPOSE_OVERRIDE):
+        cmd.extend(["-f", DOCKER_COMPOSE_OVERRIDE])
+    
+    # Add production override if in production mode
+    if environment == "production" and os.path.exists(DOCKER_COMPOSE_PROD):
+        cmd.extend(["-f", DOCKER_COMPOSE_PROD])
+    
+    # Add the project name and up command
+    cmd.extend(["-p", PROJECT_NAME, "up", "-d"])
+    
+    # Add profile if specified
     if profile and profile != "none":
         cmd.extend(["--profile", profile])
-    cmd.extend(["-f", "docker-compose.yml"])
-    if environment and environment == "private":
-        cmd.extend(["-f", "docker-compose.override.private.yml"])
-    if environment and environment == "public":
-        cmd.extend(["-f", "docker-compose.override.public.yml"])
-    cmd.extend(["up", "-d"])
-    run_command(cmd)
+    
+    # Run the command
+    result = run_command(cmd)
+    if not result or result.returncode != 0:
+        print("Failed to start services.")
+        return False
+    
+    print("Waiting for services to initialize...")
+    time.sleep(10)  # Give services time to start
+    return True
+
+def check_services_health():
+    """Check the health of running services."""
+    print("Checking service health...")
+    
+    # Get the list of services with health checks
+    cmd = [
+        "docker", "compose", "-p", PROJECT_NAME,
+        "ps", "--format", "json"
+    ]
+    
+    result = run_command(cmd, capture_output=True)
+    if not result or not result.stdout.strip():
+        print("No services running or failed to get service status.")
+        return False
+    
+    try:
+        services = json.loads(result.stdout)
+        healthy = True
+        
+        for service in services:
+            service_name = service.get("Service", "")
+            status = service.get("Status", "")
+            state = service.get("State", "")
+            health = service.get("Health", "")
+            
+            print(f"\nService: {service_name}")
+            print(f"Status: {status}")
+            print(f"State: {state}")
+            print(f"Health: {health}")
+            
+            if "unhealthy" in health.lower() or "exited" in state.lower():
+                print(f"⚠️  Warning: {service_name} is not healthy")
+                healthy = False
+        
+        return healthy
+    except json.JSONDecodeError as e:
+        print(f"Error parsing service status: {e}")
+        return False
 
 def generate_searxng_secret_key():
-    """Generate a secret key for SearXNG based on the current platform."""
-    print("Checking SearXNG settings...")
-
-    # Define paths for SearXNG settings files
-    settings_path = os.path.join("searxng", "settings.yml")
-    settings_base_path = os.path.join("searxng", "settings-base.yml")
-
-    # Check if settings-base.yml exists
-    if not os.path.exists(settings_base_path):
-        print(f"Warning: SearXNG base settings file not found at {settings_base_path}")
-        return
-
-    # Check if settings.yml exists, if not create it from settings-base.yml
-    if not os.path.exists(settings_path):
-        print(f"SearXNG settings.yml not found. Creating from {settings_base_path}...")
-        try:
-            shutil.copyfile(settings_base_path, settings_path)
-            print(f"Created {settings_path} from {settings_base_path}")
-        except Exception as e:
-            print(f"Error creating settings.yml: {e}")
-            return
-    else:
-        print(f"SearXNG settings.yml already exists at {settings_path}")
-
-    print("Generating SearXNG secret key...")
-
-    # Detect the platform and run the appropriate command
-    system = platform.system()
-
-    try:
-        if system == "Windows":
-            print("Detected Windows platform, using PowerShell to generate secret key...")
-            # PowerShell command to generate a random key and replace in the settings file
-            ps_command = [
-                "powershell", "-Command",
-                "$randomBytes = New-Object byte[] 32; " +
-                "(New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($randomBytes); " +
-                "$secretKey = -join ($randomBytes | ForEach-Object { \"{0:x2}\" -f $_ }); " +
-                "(Get-Content searxng/settings.yml) -replace 'ultrasecretkey', $secretKey | Set-Content searxng/settings.yml"
-            ]
-            subprocess.run(ps_command, check=True)
-
-        elif system == "Darwin":  # macOS
-            print("Detected macOS platform, using sed command with empty string parameter...")
-            # macOS sed command requires an empty string for the -i parameter
-            openssl_cmd = ["openssl", "rand", "-hex", "32"]
-            random_key = subprocess.check_output(openssl_cmd).decode('utf-8').strip()
-            sed_cmd = ["sed", "-i", "", f"s|ultrasecretkey|{random_key}|g", settings_path]
-            subprocess.run(sed_cmd, check=True)
-
-        else:  # Linux and other Unix-like systems
-            print("Detected Linux/Unix platform, using standard sed command...")
-            # Standard sed command for Linux
-            openssl_cmd = ["openssl", "rand", "-hex", "32"]
-            random_key = subprocess.check_output(openssl_cmd).decode('utf-8').strip()
-            sed_cmd = ["sed", "-i", f"s|ultrasecretkey|{random_key}|g", settings_path]
-            subprocess.run(sed_cmd, check=True)
-
-        print("SearXNG secret key generated successfully.")
-
-    except Exception as e:
-        print(f"Error generating SearXNG secret key: {e}")
-        print("You may need to manually generate the secret key using the commands:")
-        print("  - Linux: sed -i \"s|ultrasecretkey|$(openssl rand -hex 32)|g\" searxng/settings.yml")
-        print("  - macOS: sed -i '' \"s|ultrasecretkey|$(openssl rand -hex 32)|g\" searxng/settings.yml")
-        print("  - Windows (PowerShell):")
-        print("    $randomBytes = New-Object byte[] 32")
-        print("    (New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($randomBytes)")
-        print("    $secretKey = -join ($randomBytes | ForEach-Object { \"{0:x2}\" -f $_ })")
-        print("    (Get-Content searxng/settings.yml) -replace 'ultrasecretkey', $secretKey | Set-Content searxng/settings.yml")
+    """Generate a secure secret key for SearXNG."""
+    import secrets
+    import string
+    
+    alphabet = string.ascii_letters + string.digits + "-_"
+    return ''.join(secrets.choice(alphabet) for _ in range(64))
 
 def check_and_fix_docker_compose_for_searxng():
     """Check and modify docker-compose.yml for SearXNG first run."""
-    docker_compose_path = "docker-compose.yml"
-    if not os.path.exists(docker_compose_path):
-        print(f"Warning: Docker Compose file not found at {docker_compose_path}")
-        return
+    # Check if this is the first run by looking for the default secret key
+    if not os.path.exists("docker/data/searxng"):
+        os.makedirs("docker/data/searxng", exist_ok=True)
+    
+    settings_path = "docker/data/searxng/settings.yml"
+    
+    # Check if we need to generate a secret key
+    if not os.path.exists(settings_path):
+        print("Generating new SearXNG configuration...")
+        secret_key = generate_searxng_secret_key()
+        
+        # Create a basic settings.yml
+        settings_content = f"""# Base configuration for SearXNG
+# See https://docs.searxng.org/admin/engines/settings.html for details
+
+use_default_settings: true
+
+server:
+  secret_key: "{secret_key}"
+  base_url: "https://search.${{BASE_DOMAIN}}/"
+  limiter: false
+  image_proxy: true
+  http_protocol_version: "1.1"
+  
+ui:
+  theme: simple
+  theme_args:
+    simple_style: auto
+  infinite_scroll: true
+  
+search:
+  safe_search: 0
+  autocomplete: google
+  default_lang: en
+  languages_mapping:
+    en: English
+    de: Deutsch
+    fr: Français
+    es: Español
+
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    disabled: false
+    use_mobile_ui: true
+    
+  - name: bing
+    engine: bing
+    shortcut: b
+    disabled: false
+    
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: d
+    disabled: false
+"""
+        
+        with open(settings_path, 'w') as f:
+            f.write(settings_content)
+        
+        # Set appropriate permissions
+        if platform.system() != "Windows":
+            os.chmod(settings_path, 0o600)
+        
+        print("SearXNG configuration has been generated.")
+        return True
+    
+    return False
 
     try:
         # Read the docker-compose.yml file
@@ -218,31 +390,45 @@ def check_and_fix_docker_compose_for_searxng():
         print(f"Error checking/modifying docker-compose.yml for SearXNG: {e}")
 
 def main():
-    parser = argparse.ArgumentParser(description='Start the local AI and Supabase services.')
-    parser.add_argument('--profile', choices=['cpu', 'gpu-nvidia', 'gpu-amd', 'none'], default='cpu',
-                      help='Profile to use for Docker Compose (default: cpu)')
-    parser.add_argument('--environment', choices=['private', 'public'], default='private',
-                      help='Environment to use for Docker Compose (default: private)')
+    parser = argparse.ArgumentParser(description='Start the Everyday-OS stack.')
+    parser.add_argument('--stop', '-s', action='store_true', help='Stop the services instead of starting them')
     args = parser.parse_args()
 
-    clone_supabase_repo()
-    prepare_supabase_env()
+    if args.stop:
+        stop_existing_containers()
+        return
 
-    # Generate SearXNG secret key and check docker-compose.yml
-    generate_searxng_secret_key()
-    check_and_fix_docker_compose_for_searxng()
+    try:
+        # Start Supabase first if it exists
+        if os.path.exists("supabase"):
+            print("Starting Supabase services...")
+            start_supabase()
+            
+            # Wait for Supabase to initialize
+            print("Waiting for Supabase to initialize...")
+            time.sleep(10)
+        else:
+            print("Supabase directory not found, skipping Supabase services...")
 
-    stop_existing_containers(args.profile)
+        # Start the main stack
+        print("Starting Everyday-OS services...")
+        start_local_ai()
 
-    # Start Supabase first
-    start_supabase(args.environment)
+        print("Services started successfully!")
+        print("\nAccess the following services (ensure DNS is properly configured):")
+        protocol = os.getenv('PROTOCOL', 'https')
+        base_domain = os.getenv('BASE_DOMAIN', 'example.com')
+        print(f"- n8n: {protocol}://n8n.{base_domain}")
+        print(f"- MinIO Console: {protocol}://minio.{base_domain} (access key: {os.getenv('MINIO_ROOT_USER', 'minioadmin')}, secret: {os.getenv('MINIO_ROOT_PASSWORD', 'minioadmin')})")
+        print(f"- Supabase Studio: {protocol}://supabase.{base_domain}")
+        print(f"- Neo4j Browser: {protocol}://neo4j.{base_domain}")
+        print(f"- Langfuse: {protocol}://langfuse.{base_domain}")
+        print(f"- NCA Toolkit: {protocol}://nca.{base_domain}")
+        print("\nNote: Make sure your DNS is properly configured to point these subdomains to your server's IP address.")
 
-    # Give Supabase some time to initialize
-    print("Waiting for Supabase to initialize...")
-    time.sleep(10)
-
-    # Then start the local AI services
-    start_local_ai(args.profile, args.environment)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
