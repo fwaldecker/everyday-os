@@ -1,5 +1,6 @@
-include:
-  - ./supabase/docker/docker-compose.yml
+# Supabase include commented out - path doesn't exist
+# include:
+#   - ./supabase/docker/docker-compose.yml
 
 volumes:
   n8n_storage:
@@ -17,6 +18,11 @@ volumes:
   langfuse_clickhouse_logs:
   langfuse_minio_data:
   minio_data:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+  nca_data:
 
 x-n8n: &service-n8n
   image: n8nio/n8n:1.49.1
@@ -88,7 +94,7 @@ services:
       - OPENAI_API_BASE_URL=${OPENAI_API_BASE_URL:-https://api.openai.com/v1}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OLLAMA_API_BASE_URL=${OLLAMA_API_BASE_URL:-http://ollama:11434}
+      # - OLLAMA_API_BASE_URL=${OLLAMA_API_BASE_URL:-http://ollama:11434}  # Commented out - no local Ollama service
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-your-secret-key-change-me}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-jwt-secret-change-me}
       - SESSION_SECRET=${SESSION_SECRET:-your-session-secret-change-me}
@@ -313,7 +319,7 @@ services:
 
   nca-toolkit:
     build:
-      context: ../docker/nca-toolkit
+      context: ./nca-toolkit
       dockerfile: Dockerfile
     container_name: nca-toolkit
     restart: unless-stopped
@@ -414,6 +420,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    depends_on:
       redis:
         condition: service_healthy
       clickhouse:
@@ -506,26 +513,6 @@ services:
       retries: 10
       start_period: 1s
 
-  minio:
-    image: minio/minio
-    restart: always
-    entrypoint: sh
-    # create the 'langfuse' bucket before starting the service
-    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
-    expose:
-      - 9000/tcp
-      - 9001/tcp
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    volumes:
-      - langfuse_minio_data:/data
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 1s
-      timeout: 5s
-      retries: 5
-      start_period: 1s
 
   postgres:
     image: postgres:${POSTGRES_VERSION:-latest}
@@ -650,47 +637,4 @@ services:
         max-size: "10m"
         max-file: "3"
         tag: "searxng"
-        max-size: "1m"
-        max-file: "1"
 
-  ollama-cpu:
-    profiles: ["cpu"]
-    <<: *service-ollama
-
-  ollama-gpu:
-    profiles: ["gpu-nvidia"]
-    <<: *service-ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
-  ollama-gpu-amd:
-    profiles: ["gpu-amd"]
-    <<: *service-ollama
-    image: ollama/ollama:rocm
-    devices:
-      - "/dev/kfd"
-      - "/dev/dri"
-
-  ollama-pull-llama-cpu:
-    profiles: ["cpu"]
-    <<: *init-ollama
-    depends_on:
-      - ollama-cpu
-
-  ollama-pull-llama-gpu:
-    profiles: ["gpu-nvidia"]
-    <<: *init-ollama
-    depends_on:
-      - ollama-gpu
-
-  ollama-pull-llama-gpu-amd:
-    profiles: [gpu-amd]
-    <<: *init-ollama
-    image: ollama/ollama:rocm
-    depends_on:
-     - ollama-gpu-amd

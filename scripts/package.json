@@ -1,0 +1,29 @@
+{
+  "name": "everyday-os-google-setup",
+  "version": "1.0.0",
+  "description": "Google Cloud setup automation for N8N clients",
+  "main": "setup-google-client.js",
+  "scripts": {
+    "setup": "node setup-google-client.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "google-cloud",
+    "n8n",
+    "automation",
+    "oauth"
+  ],
+  "author": "Everyday-OS",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.5",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.3.1",
+    "googleapis": "^130.0.0",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

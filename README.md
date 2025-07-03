@@ -40,8 +40,7 @@
   - [Caddy](https://caddyserver.com/): Reverse proxy & HTTPS
 
 - **AI Components**
-  - [Ollama](https://ollama.com/): Local LLMs
-  - [Open WebUI](https://openwebui.com/): Chat interface
+  - [Open WebUI](https://openwebui.com/): Chat interface for OpenAI/Anthropic APIs
   - Vector search capabilities
   - Pre-configured AI workflows
 
@@ -171,6 +170,116 @@ git pull
 python start_services.py --reset
 ```
 
+## 🔧 Google Cloud Setup Automation
+
+Everyday-OS includes a powerful automation script for setting up Google Cloud projects with N8N integration during client onboarding calls.
+
+### What It Does
+
+The `setup-google-client.js` script automates the entire Google Cloud setup process:
+
+- ✅ Creates Google Cloud project in client's organization
+- ✅ Enables all 10 premium APIs (Gmail, Drive, Docs, Calendar, Analytics, etc.)
+- ✅ Configures OAuth consent screen with proper scopes
+- ✅ Creates OAuth 2.0 credentials automatically
+- ✅ Injects credentials into N8N for immediate use
+- ✅ Tests all API connections
+
+### Prerequisites
+
+1. **Service Account Setup**:
+   - Create a service account in your Google Cloud project
+   - Grant it **Owner** or **Editor** role
+   - Download the JSON key file
+
+2. **Configure Environment**:
+   ```bash
+   # Add to your .env file:
+   GOOGLE_SERVICE_ACCOUNT_KEY='{"type":"service_account"...}'  # Your service account JSON
+   GOOGLE_BILLING_ACCOUNT_ID=XXXXXX-XXXXXX-XXXXXX  # Your billing account ID
+   N8N_API_URL=http://n8n:5678  # N8N API endpoint
+   N8N_API_KEY=your-n8n-api-key  # If N8N API authentication is enabled
+   ```
+
+3. **Install Dependencies**:
+   ```bash
+   cd scripts
+   npm install
+   ```
+
+### Usage During Client Calls
+
+1. **Client creates Google Cloud account** (you guide them)
+2. **Client adds you as Owner** in IAM & Admin (temporary for setup)
+3. **Run the setup script**:
+   ```bash
+   cd scripts
+   node setup-google-client.js
+   ```
+
+4. **Follow the prompts**:
+   ```
+   ? Client company name: Acme Corp
+   ? Client email: admin@acmecorp.com
+   ? Client domain: acmecorp.com
+   ? Their Google Cloud Organization ID: 123456789
+   ```
+
+5. **Watch the automation** (takes ~5 minutes):
+   ```
+   ✅ Created project: acmecorp-n8n-20250702
+   ✅ Enabled Gmail API
+   ✅ Enabled Drive API
+   ✅ Enabled Docs API
+   ... (all 10 APIs)
+   ✅ Configured OAuth consent screen
+   ✅ Created OAuth credentials automatically
+   ✅ Generated N8N configuration
+   ✅ Injected credentials into N8N
+   ✅ Tested connections - all working!
+   🎉 Complete setup in 4 minutes!
+   ```
+
+### APIs Enabled
+
+The script automatically enables these premium Google APIs:
+- Gmail API - Send and read emails
+- Google Drive API - File storage and management
+- Google Docs API - Document creation and editing
+- Google Calendar API - Calendar event management
+- Google Analytics API - Analytics data access
+- Google Ads API - Advertising campaign management
+- Google Sheets API - Spreadsheet operations
+- Cloud Monitoring API - Resource monitoring
+- Service Management API - Service configuration
+- Cloud Error Reporting API - Error tracking
+
+### OAuth Scopes Configured
+
+The following scopes are automatically configured:
+- `https://www.googleapis.com/auth/drive`
+- `https://www.googleapis.com/auth/gmail.send`
+- `https://www.googleapis.com/auth/gmail.readonly`
+- `https://www.googleapis.com/auth/documents`
+- `https://www.googleapis.com/auth/calendar`
+- `https://www.googleapis.com/auth/analytics.readonly`
+- `https://www.googleapis.com/auth/adwords`
+- `https://www.googleapis.com/auth/spreadsheets`
+
+### Troubleshooting
+
+- **"Permission denied" errors**: Ensure your service account has Owner/Editor role
+- **"Billing account required"**: Set `GOOGLE_BILLING_ACCOUNT_ID` in .env
+- **"API not enabled"**: The script will retry automatically
+- **N8N injection fails**: Check N8N_API_URL and N8N_API_KEY settings
+
+### Security Notes
+
+- Remove client's Owner access after setup completion
+- Service account credentials are never shared with clients
+- OAuth credentials are created in client's own project
+- All API communications use secure HTTPS
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) before submitting pull requests.
@@ -183,7 +292,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [n8n](https://n8n.io/) for the amazing workflow automation platform
 - [Supabase](https://supabase.com/) for the open source Firebase alternative
-- [Ollama](https://ollama.com/) for making local LLMs accessible
 - [Open WebUI](https://openwebui.com/) for the beautiful chat interface
 - [MinIO](https://min.io/) for S3-compatible storage
 - [Neo4j](https://neo4j.com/) for graph database capabilities
@@ -275,9 +383,6 @@ integrations and advanced AI components
 
 ✅ [**Supabase**](https://supabase.com/) - Open source database as a service -
 most widely used database for AI agents
-
-✅ [**Ollama**](https://ollama.com/) - Cross-platform LLM platform to install
-and run the latest local LLMs
 
 ✅ [**Open WebUI**](https://openwebui.com/) - ChatGPT-like interface to
 privately interact with your local models and N8N agents
@@ -378,45 +483,8 @@ The project includes a `start_services.py` script that handles starting both the
 ### For Nvidia GPU users
 
 ```bash
-python start_services.py --profile gpu-nvidia
+python start_services.py
 ```
-
-> [!NOTE]
-> If you have not used your Nvidia GPU with Docker before, please follow the
-> [Ollama Docker instructions](https://github.com/ollama/ollama/blob/main/docs/docker.md).
-
-### For AMD GPU users on Linux
-
-```bash
-python start_services.py --profile gpu-amd
-```
-
-### For Mac / Apple Silicon users
-
-If you're using a Mac with an M1 or newer processor, you can't expose your GPU to the Docker instance, unfortunately. There are two options in this case:
-
-1. Run the starter kit fully on CPU:
-   ```bash
-   python start_services.py --profile cpu
-   ```
-
-2. Run Ollama on your Mac for faster inference, and connect to that from the n8n instance:
-   ```bash
-   python start_services.py --profile none
-   ```
-
-   If you want to run Ollama on your mac, check the [Ollama homepage](https://ollama.com/) for installation instructions.
-
-#### For Mac users running OLLAMA locally
-
-If you're running OLLAMA locally on your Mac (not in Docker), you need to modify the OLLAMA_HOST environment variable in the n8n service configuration. Update the x-n8n section in your Docker Compose file as follows:
-
-```yaml
-x-n8n: &service-n8n
-  # ... other configurations ...
-  environment:
-    # ... other environment variables ...
-    - OLLAMA_HOST=host.docker.internal:11434
 ```
 
 Additionally, after you see "Editor is now accessible via: http://localhost:5678/":
@@ -438,11 +506,11 @@ The **start-services.py** script offers the possibility to pass one of two optio
 
 The stack initialized with
 ```bash
-   python start_services.py --profile gpu-nvidia --environment private
+   python start_services.py --environment private
    ```
 equals the one initialized with
 ```bash
-   python start_services.py --profile gpu-nvidia
+   python start_services.py
    ```
 
 ## Deploying to the Cloud
@@ -580,14 +648,6 @@ Here are solutions to common issues you might encounter:
 
 - **Files not Found in Supabase Folder** - If you get any errors around files missing in the supabase/ folder like .env, docker/docker-compose.yml, etc. this most likely means you had a "bad" pull of the Supabase GitHub repository when you ran the start_services.py script. Delete the supabase/ folder within the Local AI Package folder entirely and try again.
 
-### GPU Support Issues
-
-- **Windows GPU Support**: If you're having trouble running Ollama with GPU support on Windows with Docker Desktop:
-  1. Open Docker Desktop settings
-  2. Enable WSL 2 backend
-  3. See the [Docker GPU documentation](https://docs.docker.com/desktop/features/gpu/) for more details
-
-- **Linux GPU Support**: If you're having trouble running Ollama with GPU support on Linux, follow the [Ollama Docker instructions](https://github.com/ollama/ollama/blob/main/docs/docker.md).
 
 ## 👓 Recommended reading
 

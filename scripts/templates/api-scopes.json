@@ -1,0 +1,83 @@
+{
+  "apis": [
+    {
+      "id": "gmail.googleapis.com",
+      "name": "Gmail API",
+      "description": "Send and read emails",
+      "scopes": [
+        "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/gmail.readonly"
+      ]
+    },
+    {
+      "id": "drive.googleapis.com",
+      "name": "Google Drive API",
+      "description": "Access and manage Google Drive files",
+      "scopes": [
+        "https://www.googleapis.com/auth/drive"
+      ]
+    },
+    {
+      "id": "docs.googleapis.com",
+      "name": "Google Docs API",
+      "description": "Create and edit Google Docs",
+      "scopes": [
+        "https://www.googleapis.com/auth/documents"
+      ]
+    },
+    {
+      "id": "calendar-json.googleapis.com",
+      "name": "Google Calendar API",
+      "description": "Access and manage calendar events",
+      "scopes": [
+        "https://www.googleapis.com/auth/calendar"
+      ]
+    },
+    {
+      "id": "monitoring.googleapis.com",
+      "name": "Cloud Monitoring API",
+      "description": "Monitor Google Cloud resources",
+      "scopes": []
+    },
+    {
+      "id": "analytics.googleapis.com",
+      "name": "Google Analytics API",
+      "description": "Access Google Analytics data",
+      "scopes": [
+        "https://www.googleapis.com/auth/analytics.readonly"
+      ]
+    },
+    {
+      "id": "googleads.googleapis.com",
+      "name": "Google Ads API",
+      "description": "Manage Google Ads campaigns",
+      "scopes": [
+        "https://www.googleapis.com/auth/adwords"
+      ]
+    },
+    {
+      "id": "servicemanagement.googleapis.com",
+      "name": "Service Management API",
+      "description": "Manage Google Cloud services",
+      "scopes": []
+    },
+    {
+      "id": "sheets.googleapis.com",
+      "name": "Google Sheets API",
+      "description": "Read and write Google Sheets",
+      "scopes": [
+        "https://www.googleapis.com/auth/spreadsheets"
+      ]
+    },
+    {
+      "id": "clouderrorreporting.googleapis.com",
+      "name": "Cloud Error Reporting API",
+      "description": "Report and analyze errors",
+      "scopes": []
+    }
+  ],
+  "redirectUris": [
+    "https://n8n.{{domain}}/rest/oauth2-credential/callback",
+    "http://localhost:5678/rest/oauth2-credential/callback"
+  ]
+}
