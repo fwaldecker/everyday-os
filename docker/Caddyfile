@@ -1,9 +1,9 @@
 # Global configuration
 {
-    email {$LETSENCRYPT_EMAIL}
-    acme_ca {$ACME_CA}
-    acme_dns {$ACME_DNS}
-    admin {$ADMIN_EMAIL}
+    email francis.waldecker@gmail.com
+    # acme_ca {$ACME_CA}
+    # acme_dns {$ACME_DNS}
+    # admin {$ADMIN_EMAIL}
 }
 
 # Main domain redirect
@@ -14,9 +14,6 @@
 # n8n
 n8n.{$BASE_DOMAIN} {
     # Handle ACME challenge
-    tls {
-        dns {$ACME_DNS}
-    }
     
     reverse_proxy n8n:5678 {
         header_up Host {host}
@@ -29,9 +26,6 @@ n8n.{$BASE_DOMAIN} {
 # MinIO Console
 minio.{$BASE_DOMAIN} {
     # Handle ACME challenge
-    tls {
-        dns {$ACME_DNS}
-    }
     
     reverse_proxy minio:9001 {
         header_up Host {host}
@@ -74,9 +68,6 @@ langfuse.{$BASE_DOMAIN} {
 # NCA Toolkit
 nca.{$BASE_DOMAIN} {
     # Handle ACME challenge
-    tls {
-        dns {$ACME_DNS}
-    }
     
     reverse_proxy nca-toolkit:8010 {
         header_up Host {host}
@@ -88,9 +79,6 @@ nca.{$BASE_DOMAIN} {
 
 # Handle ACME challenge for all subdomains
 *.{$BASE_DOMAIN} {
-    tls {
-        dns {$ACME_DNS}
-    }
     
     @acme path /acme-challenge/*
     handle @acme {

@@ -182,6 +182,7 @@ def start_services(profile=None, environment=None):
     cmd = [
         "docker", "compose",
         "-f", DOCKER_COMPOSE_FILE,
+        "--env-file", DEFAULT_ENV_FILE,
     ]
     
     # Add override files if they exist
@@ -328,67 +329,6 @@ engines:
     
     return False
 
-    try:
-        # Read the docker-compose.yml file
-        with open(docker_compose_path, 'r') as file:
-            content = file.read()
-
-        # Default to first run
-        is_first_run = True
-
-        # Check if Docker is running and if the SearXNG container exists
-        try:
-            # Check if the SearXNG container is running
-            container_check = subprocess.run(
-                ["docker", "ps", "--filter", "name=searxng", "--format", "{{.Names}}"],
-                capture_output=True, text=True, check=True
-            )
-            searxng_containers = container_check.stdout.strip().split('\n')
-
-            # If SearXNG container is running, check inside for uwsgi.ini
-            if any(container for container in searxng_containers if container):
-                container_name = next(container for container in searxng_containers if container)
-                print(f"Found running SearXNG container: {container_name}")
-
-                # Check if uwsgi.ini exists inside the container
-                container_check = subprocess.run(
-                    ["docker", "exec", container_name, "sh", "-c", "[ -f /etc/searxng/uwsgi.ini ] && echo 'found' || echo 'not_found'"],
-                    capture_output=True, text=True, check=False
-                )
-
-                if "found" in container_check.stdout:
-                    print("Found uwsgi.ini inside the SearXNG container - not first run")
-                    is_first_run = False
-                else:
-                    print("uwsgi.ini not found inside the SearXNG container - first run")
-                    is_first_run = True
-            else:
-                print("No running SearXNG container found - assuming first run")
-        except Exception as e:
-            print(f"Error checking Docker container: {e} - assuming first run")
-
-        if is_first_run and "cap_drop: - ALL" in content:
-            print("First run detected for SearXNG. Temporarily removing 'cap_drop: - ALL' directive...")
-            # Temporarily comment out the cap_drop line
-            modified_content = content.replace("cap_drop: - ALL", "# cap_drop: - ALL  # Temporarily commented out for first run")
-
-            # Write the modified content back
-            with open(docker_compose_path, 'w') as file:
-                file.write(modified_content)
-
-            print("Note: After the first run completes successfully, you should re-add 'cap_drop: - ALL' to docker-compose.yml for security reasons.")
-        elif not is_first_run and "# cap_drop: - ALL  # Temporarily commented out for first run" in content:
-            print("SearXNG has been initialized. Re-enabling 'cap_drop: - ALL' directive for security...")
-            # Uncomment the cap_drop line
-            modified_content = content.replace("# cap_drop: - ALL  # Temporarily commented out for first run", "cap_drop: - ALL")
-
-            # Write the modified content back
-            with open(docker_compose_path, 'w') as file:
-                file.write(modified_content)
-
-    except Exception as e:
-        print(f"Error checking/modifying docker-compose.yml for SearXNG: {e}")
-
 def main():
     parser = argparse.ArgumentParser(description='Start the Everyday-OS stack.')
     parser.add_argument('--stop', '-s', action='store_true', help='Stop the services instead of starting them')
@@ -397,6 +337,12 @@ def main():
     if args.stop:
         stop_existing_containers()
         return
+
+    # Check if .env file exists
+    if not os.path.exists(DEFAULT_ENV_FILE):
+        print(f"Error: Environment file {DEFAULT_ENV_FILE} not found!")
+        print("Please copy .env.example to .env and configure it first.")
+        sys.exit(1)
 
     try:
         # Start Supabase first if it exists
@@ -412,7 +358,7 @@ def main():
 
         # Start the main stack
         print("Starting Everyday-OS services...")
-        start_local_ai()
+        start_services()
 
         print("Services started successfully!")
         print("\nAccess the following services (ensure DNS is properly configured):")
