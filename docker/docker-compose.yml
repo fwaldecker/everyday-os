@@ -38,6 +38,10 @@ x-n8n: &service-n8n
     - N8N_PROTOCOL=http
     - N8N_WEBHOOK_URL=${PROTOCOL}://n8n.${BASE_DOMAIN}
     - N8N_EDITOR_BASE_URL=${PROTOCOL}://n8n.${BASE_DOMAIN}
+    - N8N_MAX_UPLOAD_SIZE=5GB
+    - N8N_PAYLOAD_SIZE_MAX=5120  # 5GB in MB
+    - N8N_TIMEOUT=7200000  # 2 hours
+    - TMPDIR=/data/tmp
   healthcheck:
     test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
     interval: 30s
@@ -133,10 +137,22 @@ services:
     restart: unless-stopped
     expose:
       - 5678/tcp
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 8G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
     volumes:
       - n8n_storage:/home/node/.n8n
       - ./n8n/backup:/backup
       - ./shared:/data/shared
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          size: 2G
     depends_on:
       n8n-import:
         condition: service_completed_successfully
