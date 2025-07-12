@@ -27,7 +27,6 @@ You need a domain with these A records pointing to your server's IP:
 - `n8n.yourdomain.com`
 - `chat.yourdomain.com`
 - `supabase.yourdomain.com`
-- `langfuse.yourdomain.com`
 - `neo4j.yourdomain.com`
 - `nca.yourdomain.com`
 - `minio-console.yourdomain.com`
@@ -254,7 +253,6 @@ docker compose -p everyday-os ps
 After deployment, access services at:
 - N8N: `https://n8n.yourdomain.com`
 - Open WebUI: `https://chat.yourdomain.com`
-- Langfuse: `https://langfuse.yourdomain.com`
 - MinIO: `https://minio-console.yourdomain.com`
 - Neo4j: `https://neo4j.yourdomain.com`
 - NCA: `https://nca.yourdomain.com`

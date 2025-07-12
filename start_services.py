@@ -3,10 +3,10 @@
 start_services.py
 
 This script manages the Everyday-OS Docker Compose environment, including:
-- Supabase backend services
-- AI/ML services (N8N, Langfuse, etc.)
+- AI/ML services (N8N, Open WebUI, etc.)
 - Storage services (MinIO)
 - Search and analytics services (SearXNG, Neo4j)
+- Database services (PostgreSQL)
 - Web interfaces and APIs
 
 All services are managed under the same Docker Compose project ("everyday-os").
@@ -104,32 +104,13 @@ def setup_environment():
     
     # Set permissions (important for Linux/macOS)
     if platform.system() != "Windows":
-        run_command(["chmod", "-R", "777", "docker/data"], check=False)
-        run_command(["chmod", "-R", "777", "docker/logs"], check=False)
+        run_command(["chmod", "-R", "755", "docker/data"], check=False)
+        run_command(["chmod", "-R", "755", "docker/logs"], check=False)
 
 def clone_supabase_repo():
     """Clone the Supabase repository using sparse checkout if not already present."""
-    if not os.path.exists("supabase"):
-        print("Cloning the Supabase repository...")
-        result = run_command([
-            "git", "clone", "--filter=blob:none", "--no-checkout",
-            "--depth=1", "--single-branch", "--branch=master",
-            "https://github.com/supabase/supabase.git"
-        ])
-        if not result:
-            print("Failed to clone Supabase repository.")
-            sys.exit(1)
-            
-        os.chdir("supabase")
-        run_command(["git", "sparse-checkout", "init", "--cone"])
-        run_command(["git", "sparse-checkout", "set", "docker"])
-        run_command(["git", "checkout", "master"])
-        os.chdir("..")
-    else:
-        print("Supabase repository already exists, updating...")
-        os.chdir("supabase")
-        run_command(["git", "pull"])
-        os.chdir("..")
+    # This function is kept for backward compatibility but not used
+    pass
 
 def prepare_supabase_env():
     """Prepare the Supabase environment by copying .env and setting up necessary files."""
@@ -345,16 +326,10 @@ def main():
         sys.exit(1)
 
     try:
-        # Start Supabase first if it exists
-        if os.path.exists("supabase"):
-            print("Starting Supabase services...")
-            start_supabase()
-            
-            # Wait for Supabase to initialize
-            print("Waiting for Supabase to initialize...")
-            time.sleep(10)
-        else:
-            print("Supabase directory not found, skipping Supabase services...")
+        # Check environment
+        check_docker()
+        check_requirements()
+        setup_environment()
 
         # Start the main stack
         print("Starting Everyday-OS services...")
@@ -363,13 +338,13 @@ def main():
         print("Services started successfully!")
         print("\nAccess the following services (ensure DNS is properly configured):")
         protocol = os.getenv('PROTOCOL', 'https')
-        base_domain = os.getenv('BASE_DOMAIN', 'example.com')
+        base_domain = os.getenv('BASE_DOMAIN', 'yourdomain.com')
         print(f"- n8n: {protocol}://n8n.{base_domain}")
-        print(f"- MinIO Console: {protocol}://minio.{base_domain} (access key: {os.getenv('MINIO_ROOT_USER', 'minioadmin')}, secret: {os.getenv('MINIO_ROOT_PASSWORD', 'minioadmin')})")
-        print(f"- Supabase Studio: {protocol}://supabase.{base_domain}")
+        print(f"- Open WebUI: {protocol}://chat.{base_domain}")
+        print(f"- MinIO Console: {protocol}://minio-console.{base_domain}")
         print(f"- Neo4j Browser: {protocol}://neo4j.{base_domain}")
-        print(f"- Langfuse: {protocol}://langfuse.{base_domain}")
         print(f"- NCA Toolkit: {protocol}://nca.{base_domain}")
+        print(f"- SearXNG: {protocol}://search.{base_domain}")
         print("\nNote: Make sure your DNS is properly configured to point these subdomains to your server's IP address.")
 
     except subprocess.CalledProcessError as e:

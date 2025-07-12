@@ -68,20 +68,6 @@
     }
 }
 
-# Langfuse - LLM Observability
-{$LANGFUSE_HOSTNAME} {
-    import security_headers
-    
-    # Langfuse needs these headers for proper functionality
-    header Access-Control-Allow-Origin "*"
-    
-    reverse_proxy langfuse-web:3000 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-    }
-}
 
 # Supabase - Backend as a Service
 {$SUPABASE_HOSTNAME} {

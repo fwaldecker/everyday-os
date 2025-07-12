@@ -5,10 +5,9 @@
 ## 🚀 Key Features
 
 - **AI & Machine Learning**
-  - Local LLMs with Ollama
-  - Vector databases for semantic search
   - AI workflow automation with n8n
-  - Model observability with Langfuse
+  - Vector databases for semantic search
+  - Integration with OpenAI and Anthropic APIs
 
 - **Data & Storage**
   - Supabase for database and authentication
@@ -36,7 +35,6 @@
   - [MinIO](https://min.io/): S3-compatible storage
   - [Neo4j](https://neo4j.com/): Graph database
   - [SearXNG](https://searxng.org/): Private web search
-  - [Langfuse](https://langfuse.com/): LLM observability
   - [Caddy](https://caddyserver.com/): Reverse proxy & HTTPS
 
 - **AI Components**
@@ -94,7 +92,6 @@ Create the following DNS A records pointing to your server's IP address:
 | A    | db         | your.server.ip.addr | 3600 |
 | A    | chat       | your.server.ip.addr | 3600 |
 | A    | search     | your.server.ip.addr | 3600 |
-| A    | langfuse   | your.server.ip.addr | 3600 |
 | A    | nca        | your.server.ip.addr | 3600 |
 
 ### Environment Variables
@@ -296,7 +293,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [MinIO](https://min.io/) for S3-compatible storage
 - [Neo4j](https://neo4j.com/) for graph database capabilities
 - [SearXNG](https://searxng.org/) for private web search
-- [Langfuse](https://langfuse.com/) for LLM observability
 
 ## 🌐 Domain and DNS Configuration
 
@@ -311,7 +307,6 @@ You'll need to create the following DNS A records pointing to your server's IP a
 | A     | minio      | your.server.ip.addr | 3600    |
 | A     | supabase   | your.server.ip.addr | 3600    |
 | A     | neo4j      | your.server.ip.addr | 3600    |
-| A     | langfuse   | your.server.ip.addr | 3600    |
 | A     | nca        | your.server.ip.addr | 3600    |
 
 Replace `your.server.ip.addr` with your actual server IP address.
@@ -387,9 +382,6 @@ most widely used database for AI agents
 ✅ [**Open WebUI**](https://openwebui.com/) - ChatGPT-like interface to
 privately interact with your local models and N8N agents
 
-✅ [**Flowise**](https://flowiseai.com/) - No/low code AI agent
-builder that pairs very well with n8n
-
 ✅ [**Qdrant**](https://qdrant.tech/) - Open source, high performance vector
 store with an comprehensive API. Even though you can use Supabase for RAG, this was
 kept unlike Postgres since it's faster than Supabase so sometimes is the better option.
@@ -400,8 +392,6 @@ kept unlike Postgres since it's faster than Supabase so sometimes is the better 
 results from up to 229 search services. Users are neither tracked nor profiled, hence the fit with the local AI package.
 
 ✅ [**Caddy**](https://caddyserver.com/) - Managed HTTPS/TLS for custom domains
-
-✅ [**Langfuse**](https://langfuse.com/) - Open source LLM engineering platform for agent observability
 
 ## Prerequisites
 
@@ -447,14 +437,9 @@ Before running the services, you need to set up your environment variables for S
    NEO4J_AUTH=
 
    ############
-   # Langfuse credentials
+   # MinIO credentials
    ############
-
-   CLICKHOUSE_PASSWORD=
    MINIO_ROOT_PASSWORD=
-   LANGFUSE_SALT=
-   NEXTAUTH_SECRET=
-   ENCRYPTION_KEY=  
    ```
 
 > [!IMPORTANT]
@@ -468,7 +453,6 @@ Before running the services, you need to set up your environment variables for S
 
    N8N_HOSTNAME=n8n.yourdomain.com
    WEBUI_HOSTNAME=:openwebui.yourdomain.com
-   FLOWISE_HOSTNAME=:flowise.yourdomain.com
    SUPABASE_HOSTNAME=:supabase.yourdomain.com
    OLLAMA_HOSTNAME=:ollama.yourdomain.com
    SEARXNG_HOSTNAME=searxng.yourdomain.com
