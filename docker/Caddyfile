@@ -1,9 +1,9 @@
 # Global configuration
 {
     email francis.waldecker@gmail.com
+    admin :2019
     # acme_ca {$ACME_CA}
     # acme_dns {$ACME_DNS}
-    # admin {$ADMIN_EMAIL}
 }
 
 # Main domain redirect
@@ -35,15 +35,15 @@ minio.{$BASE_DOMAIN} {
     }
 }
 
-# Supabase
-supabase.{$BASE_DOMAIN} {
-    reverse_proxy supabase-kong:8000 {
-        header_up Host {host}
-        header_up X-Real-IP {remote}
-        header_up X-Forwarded-For {remote}
-        header_up X-Forwarded-Proto {scheme}
-    }
-}
+# Supabase (commented out - service not deployed)
+# supabase.{$BASE_DOMAIN} {
+#     reverse_proxy supabase-kong:8000 {
+#         header_up Host {host}
+#         header_up X-Real-IP {remote}
+#         header_up X-Forwarded-For {remote}
+#         header_up X-Forwarded-Proto {scheme}
+#     }
+# }
 
 # Neo4j Browser
 neo4j.{$BASE_DOMAIN} {
@@ -55,9 +55,21 @@ neo4j.{$BASE_DOMAIN} {
     }
 }
 
-# Langfuse
-langfuse.{$BASE_DOMAIN} {
-    reverse_proxy langfuse:3000 {
+# Langfuse (commented out - service not deployed)
+# langfuse.{$BASE_DOMAIN} {
+#     reverse_proxy langfuse:3000 {
+#         header_up Host {host}
+#         header_up X-Real-IP {remote}
+#         header_up X-Forwarded-For {remote}
+#         header_up X-Forwarded-Proto {scheme}
+#     }
+# }
+
+# NCA Toolkit
+nca.{$BASE_DOMAIN} {
+    # Handle ACME challenge
+    
+    reverse_proxy nca-toolkit:8080 {
         header_up Host {host}
         header_up X-Real-IP {remote}
         header_up X-Forwarded-For {remote}
@@ -65,11 +77,11 @@ langfuse.{$BASE_DOMAIN} {
     }
 }
 
-# NCA Toolkit
-nca.{$BASE_DOMAIN} {
+# Open WebUI
+chat.{$BASE_DOMAIN} {
     # Handle ACME challenge
     
-    reverse_proxy nca-toolkit:8080 {
+    reverse_proxy open-webui:8080 {
         header_up Host {host}
         header_up X-Real-IP {remote}
         header_up X-Forwarded-For {remote}

@@ -1,285 +1,286 @@
 # Everyday-OS: Self-hosted AI and Automation Platform
 
-**Everyday-OS** is a comprehensive, self-hosted platform that combines powerful AI tools with automation capabilities. Built with Docker Compose, it provides a complete ecosystem for AI development, data processing, and workflow automation.
+Everyday-OS is a comprehensive, self-hosted platform that combines powerful AI tools with automation capabilities. Built with Docker Compose, it provides a complete ecosystem for AI development, data processing, and workflow automation.
 
 ## 🚀 Key Features
 
-- **AI & Machine Learning**
-  - AI workflow automation with n8n
-  - Vector databases for semantic search
-  - Integration with OpenAI and Anthropic APIs
+- **AI & Automation**
+  - n8n for visual workflow automation with 400+ integrations
+  - Open WebUI for interacting with OpenAI and Anthropic APIs
+  - NCA Toolkit for document processing and AI operations
+  - Integration-ready for OpenAI and Anthropic APIs
 
 - **Data & Storage**
-  - Supabase for database and authentication
-  - MinIO for object storage (S3-compatible)
+  - PostgreSQL for relational database needs
+  - MinIO for S3-compatible object storage
   - Neo4j for graph database and knowledge graphs
-  - SearXNG for private, ad-free web search
-
-- **Development & Automation**
-  - n8n for visual workflow automation
-  - Open WebUI for interacting with LLMs
-  - Caddy reverse proxy with automatic HTTPS
-  - Comprehensive API ecosystem
+  - Qdrant for high-performance vector search
+  - Redis for caching and session management
 
 - **Security & Operations**
-  - Automatic SSL certificates
-  - Fine-grained access control
-  - Service health monitoring
+  - Caddy reverse proxy with automatic HTTPS/SSL
   - Secure credential management
+  - Service health monitoring
+  - Production-ready configuration
 
-## 📦 What's Included
+## 📦 Included Services
 
-- **Core Services**
-  - [n8n](https://n8n.io/): Workflow automation
-  - [Supabase](https://supabase.com/): Database & Auth
-  - [MinIO](https://min.io/): S3-compatible storage
-  - [Neo4j](https://neo4j.com/): Graph database
-  - [SearXNG](https://searxng.org/): Private web search
-  - [Caddy](https://caddyserver.com/): Reverse proxy & HTTPS
-
-- **AI Components**
-  - [Open WebUI](https://openwebui.com/): Chat interface for OpenAI/Anthropic APIs
-  - Vector search capabilities
-  - Pre-configured AI workflows
+| Service | Purpose | Access URL |
+|---------|---------|------------|
+| [n8n](https://n8n.io/) | Workflow automation platform | `https://n8n.yourdomain.com` |
+| [Open WebUI](https://openwebui.com/) | AI chat interface | `https://chat.yourdomain.com` |
+| [NCA Toolkit](https://github.com/coleam00/nca-toolkit) | Document processing | `https://nca.yourdomain.com` |
+| [MinIO](https://min.io/) | S3-compatible storage | `https://minio.yourdomain.com` |
+| [Neo4j](https://neo4j.com/) | Graph database | `https://neo4j.yourdomain.com` |
+| [PostgreSQL](https://www.postgresql.org/) | Relational database | Internal only |
+| [Qdrant](https://qdrant.tech/) | Vector database | Internal only |
+| [Redis](https://redis.io/) | Cache/session store | Internal only |
+| [Caddy](https://caddyserver.com/) | Reverse proxy & SSL | Handles all HTTPS |
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Docker 20.10.0+
-- Docker Compose 2.0.0+
-- Python 3.8+
-- 8GB+ RAM (16GB recommended)
-- 50GB+ free disk space
+- **Server Requirements**:
+  - Ubuntu 20.04+ or compatible Linux distribution
+  - 8GB RAM minimum (16GB recommended)
+  - 50GB+ free disk space
+  - Docker 20.10+ and Docker Compose v2.0+
+  - Python 3.8+
+  - Git
+
+- **Domain Requirements**:
+  - A domain name with DNS control
+  - Ability to create A records
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/everyday-os.git
+   git clone https://github.com/fwaldecker/everyday-os.git
    cd everyday-os
    ```
 
-2. Copy the example environment file and update with your configuration:
+2. **Configure environment**:
    ```bash
    cp .env.example .env
-   nano .env  # Edit with your settings
    ```
+   
+   Edit `.env` and configure:
+   - `BASE_DOMAIN` - Your domain (e.g., `example.com`)
+   - `PROTOCOL` - Set to `https` for production
+   - `SERVER_IP` - Your server's public IP address
+   - `LETSENCRYPT_EMAIL` - Your email for SSL certificates
+   - All passwords and secrets (use `openssl rand -hex 32` to generate)
 
-3. Start the services:
+3. **Copy .env to docker directory**:
    ```bash
-   python start_services.py
+   cp .env docker/.env
    ```
 
-4. Access the services:
-   - n8n: `https://n8n.yourdomain.com`
-   - MinIO Console: `https://minio.yourdomain.com`
-   - Supabase Studio: `https://db.yourdomain.com`
-   - Open WebUI: `https://chat.yourdomain.com`
-   - SearXNG: `https://search.yourdomain.com`
+4. **Set up DNS records** pointing to your server's IP:
+   - `n8n.yourdomain.com`
+   - `chat.yourdomain.com`
+   - `nca.yourdomain.com`
+   - `neo4j.yourdomain.com`
+   - `minio.yourdomain.com`
 
-## 🌐 Domain Configuration
+5. **Configure firewall**:
+   ```bash
+   sudo ufw allow 22/tcp
+   sudo ufw allow 80/tcp
+   sudo ufw allow 443/tcp
+   sudo ufw enable
+   ```
 
-### DNS Records
+6. **Start services**:
+   ```bash
+   cd docker
+   docker compose up -d
+   ```
 
-Create the following DNS A records pointing to your server's IP address:
+7. **Verify deployment**:
+   ```bash
+   docker compose ps
+   ```
+   All services should show as "running" or "healthy".
 
-| Type | Name       | Value              | TTL  |
-|------|------------|--------------------|------|
-| A    | @          | your.server.ip.addr | 3600 |
-| A    | n8n        | your.server.ip.addr | 3600 |
-| A    | minio      | your.server.ip.addr | 3600 |
-| A    | db         | your.server.ip.addr | 3600 |
-| A    | chat       | your.server.ip.addr | 3600 |
-| A    | search     | your.server.ip.addr | 3600 |
-| A    | nca        | your.server.ip.addr | 3600 |
+## 🔧 Configuration
 
-### Environment Variables
+### Required Environment Variables
 
-Update these key variables in your `.env` file:
+Configure these in your `.env` file:
 
 ```bash
-# Base domain (e.g., example.com or subdomain.yourdomain.com)
+# Core Configuration
 BASE_DOMAIN=yourdomain.com
-
-# Protocol (http or https)
 PROTOCOL=https
+SERVER_IP=your.server.ip
+LETSENCRYPT_EMAIL=your-email@example.com
 
-# Server IP Address (for DNS records)
-SERVER_IP=your.server.ip.addr
+# n8n Configuration
+N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
+N8N_USER_MANAGEMENT_JWT_SECRET=$(openssl rand -hex 32)
 
-# MinIO credentials
-MINIO_ROOT_USER=admin
-MINIO_ROOT_PASSWORD=your-secure-password
+# Database Passwords
+POSTGRES_PASSWORD=your-secure-password  # No @ symbols!
+NEO4J_AUTH=neo4j/your-neo4j-password
+NEO4J_PASSWORD=your-neo4j-password
 
-# Supabase secrets
-POSTGRES_PASSWORD=your-secure-password
-JWT_SECRET=$(openssl rand -hex 32)
-ANON_KEY=your-supabase-anon-key
-SERVICE_ROLE_KEY=your-supabase-service-role-key
+# MinIO Configuration
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=your-minio-password
+
+# Security Keys
+SEARXNG_SECRET_KEY=$(openssl rand -hex 32)
+WEBUI_SECRET_KEY=$(openssl rand -hex 32)
+JWT_SECRET_KEY=$(openssl rand -hex 32)
+SESSION_SECRET=$(openssl rand -hex 32)
+
+# API Keys (Optional)
+OPENAI_API_KEY=your-openai-key
+ANTHROPIC_API_KEY=your-anthropic-key
 ```
 
-## 🔒 Security
+### Service URLs Configuration
 
-### Default Credentials
+Uncomment and configure these in `.env` for production:
 
-- **MinIO Console**:
-  - Username: `admin` (or as set in `.env`)
-  - Password: (set in `.env` as `MINIO_ROOT_PASSWORD`)
+```bash
+N8N_HOSTNAME=n8n.${BASE_DOMAIN}
+WEBUI_HOSTNAME=chat.${BASE_DOMAIN}
+NEO4J_HOSTNAME=neo4j.${BASE_DOMAIN}
+NCA_HOSTNAME=nca.${BASE_DOMAIN}
+MINIO_CONSOLE_HOSTNAME=minio.${BASE_DOMAIN}
+```
 
-- **Supabase**:
-  - Database credentials are in `.env`
-  - JWT secret is auto-generated if not set
+## 📋 Post-Installation Setup
 
-### Best Practices
+### 1. n8n Setup
+1. Visit `https://n8n.yourdomain.com`
+2. Create your admin account
+3. Configure workspace settings
+4. Set up credentials for external services
 
-1. Change all default credentials
-2. Use strong, unique passwords
-3. Enable 2FA where possible
-4. Regularly update the services
-5. Monitor service logs
-6. Use a firewall (UFW recommended)
-7. Regular backups
+### 2. Open WebUI Setup
+1. Visit `https://chat.yourdomain.com`
+2. Create your account
+3. Configure API keys:
+   - Settings → Connections → Add OpenAI/Anthropic API keys
 
-## 🛠️ Management
+### 3. MinIO Setup
+1. Visit `https://minio.yourdomain.com`
+2. Login with credentials from `.env`
+3. Create buckets as needed for your workflows
+
+### 4. Neo4j Setup
+1. Visit `https://neo4j.yourdomain.com`
+2. Login with username `neo4j` and password from `.env`
+3. Browser will prompt to change password on first login
+
+### 5. NCA Toolkit
+- Access via API at `https://nca.yourdomain.com`
+- Default API key: `nca-toolkit-default-api-key`
+- Configure custom API key in `.env` as `NCA_API_KEY`
+
+## 🔒 Security Best Practices
+
+1. **Change all default passwords** immediately
+2. **Generate strong secrets** using `openssl rand -hex 32`
+3. **Enable 2FA** where available (especially n8n)
+4. **Use HTTPS only** - never disable SSL in production
+5. **Regular updates**: 
+   ```bash
+   cd everyday-os
+   git pull
+   cd docker
+   docker compose pull
+   docker compose up -d
+   ```
+6. **Monitor logs**:
+   ```bash
+   docker compose logs -f [service-name]
+   ```
+
+## 🛠️ Maintenance
 
 ### Service Management
 
-- Start services: `python start_services.py`
-- Stop services: `python start_services.py --reset`
-- Check service status: `docker compose -p everyday-os ps`
-
-### Backups
-
-Database backups are stored in `./backups` by default. To create a manual backup:
-
 ```bash
-# Create a backup of all databases
-./scripts/backup.sh
+# Check service status
+docker compose ps
+
+# View logs
+docker compose logs -f [service-name]
+
+# Restart a service
+docker compose restart [service-name]
+
+# Stop all services
+docker compose down
+
+# Stop and remove all data (WARNING!)
+docker compose down -v
 ```
 
-### Updates
+### Backup
 
-To update to the latest version:
-
-```bash
-git pull
-python start_services.py --reset
-```
-
-## 🔧 Google Cloud Setup Automation
-
-Everyday-OS includes a powerful automation script for setting up Google Cloud projects with N8N integration during client onboarding calls.
-
-### What It Does
-
-The `setup-google-client.js` script automates the entire Google Cloud setup process:
-
-- ✅ Creates Google Cloud project in client's organization
-- ✅ Enables all 10 premium APIs (Gmail, Drive, Docs, Calendar, Analytics, etc.)
-- ✅ Configures OAuth consent screen with proper scopes
-- ✅ Creates OAuth 2.0 credentials automatically
-- ✅ Injects credentials into N8N for immediate use
-- ✅ Tests all API connections
-
-### Prerequisites
-
-1. **Service Account Setup**:
-   - Create a service account in your Google Cloud project
-   - Grant it **Owner** or **Editor** role
-   - Download the JSON key file
-
-2. **Configure Environment**:
-   ```bash
-   # Add to your .env file:
-   GOOGLE_SERVICE_ACCOUNT_KEY='{"type":"service_account"...}'  # Your service account JSON
-   GOOGLE_BILLING_ACCOUNT_ID=XXXXXX-XXXXXX-XXXXXX  # Your billing account ID
-   N8N_API_URL=http://n8n:5678  # N8N API endpoint
-   N8N_API_KEY=your-n8n-api-key  # If N8N API authentication is enabled
-   ```
-
-3. **Install Dependencies**:
-   ```bash
-   cd scripts
-   npm install
-   ```
-
-### Usage During Client Calls
-
-1. **Client creates Google Cloud account** (you guide them)
-2. **Client adds you as Owner** in IAM & Admin (temporary for setup)
-3. **Run the setup script**:
-   ```bash
-   cd scripts
-   node setup-google-client.js
-   ```
-
-4. **Follow the prompts**:
-   ```
-   ? Client company name: Acme Corp
-   ? Client email: admin@acmecorp.com
-   ? Client domain: acmecorp.com
-   ? Their Google Cloud Organization ID: 123456789
-   ```
-
-5. **Watch the automation** (takes ~5 minutes):
-   ```
-   ✅ Created project: acmecorp-n8n-20250702
-   ✅ Enabled Gmail API
-   ✅ Enabled Drive API
-   ✅ Enabled Docs API
-   ... (all 10 APIs)
-   ✅ Configured OAuth consent screen
-   ✅ Created OAuth credentials automatically
-   ✅ Generated N8N configuration
-   ✅ Injected credentials into N8N
-   ✅ Tested connections - all working!
-   🎉 Complete setup in 4 minutes!
-   ```
-
-### APIs Enabled
-
-The script automatically enables these premium Google APIs:
-- Gmail API - Send and read emails
-- Google Drive API - File storage and management
-- Google Docs API - Document creation and editing
-- Google Calendar API - Calendar event management
-- Google Analytics API - Analytics data access
-- Google Ads API - Advertising campaign management
-- Google Sheets API - Spreadsheet operations
-- Cloud Monitoring API - Resource monitoring
-- Service Management API - Service configuration
-- Cloud Error Reporting API - Error tracking
-
-### OAuth Scopes Configured
-
-The following scopes are automatically configured:
-- `https://www.googleapis.com/auth/drive`
-- `https://www.googleapis.com/auth/gmail.send`
-- `https://www.googleapis.com/auth/gmail.readonly`
-- `https://www.googleapis.com/auth/documents`
-- `https://www.googleapis.com/auth/calendar`
-- `https://www.googleapis.com/auth/analytics.readonly`
-- `https://www.googleapis.com/auth/adwords`
-- `https://www.googleapis.com/auth/spreadsheets`
+Important data locations:
+- PostgreSQL: Automated backups in volumes
+- MinIO: `/var/lib/docker/volumes/docker_minio_data`
+- n8n workflows: Export via UI or API
+- Neo4j: `/var/lib/docker/volumes/docker_neo4j_data`
 
 ### Troubleshooting
 
-- **"Permission denied" errors**: Ensure your service account has Owner/Editor role
-- **"Billing account required"**: Set `GOOGLE_BILLING_ACCOUNT_ID` in .env
-- **"API not enabled"**: The script will retry automatically
-- **N8N injection fails**: Check N8N_API_URL and N8N_API_KEY settings
+**Services not starting:**
+- Check logs: `docker compose logs [service-name]`
+- Verify `.env` file exists in docker directory
+- Ensure all required variables are set
 
-### Security Notes
+**SSL certificate issues:**
+- Verify DNS records point to correct IP
+- Check Caddy logs: `docker compose logs caddy`
+- Ensure ports 80/443 are open
 
-- Remove client's Owner access after setup completion
-- Service account credentials are never shared with clients
-- OAuth credentials are created in client's own project
-- All API communications use secure HTTPS
+**Connection issues:**
+- Verify firewall rules
+- Check service health: `docker compose ps`
+- Test internal connectivity
+
+## 🌐 Optional: Google Cloud Integration
+
+For automated Google Cloud setup during client onboarding:
+
+1. Create a service account in Google Cloud
+2. Download the JSON key file
+3. Add to `.env`:
+   ```bash
+   GOOGLE_SERVICE_ACCOUNT_KEY='{"type":"service_account",...}'
+   GOOGLE_BILLING_ACCOUNT_ID=XXXXXX-XXXXXX-XXXXXX
+   ```
+
+This enables automated:
+- Project creation
+- API enablement (Gmail, Drive, Docs, etc.)
+- OAuth credential generation
+- Direct n8n integration
+
+## 📚 Additional Resources
+
+- [n8n Documentation](https://docs.n8n.io/)
+- [Open WebUI Documentation](https://docs.openwebui.com/)
+- [Neo4j Documentation](https://neo4j.com/docs/)
+- [MinIO Documentation](https://min.io/docs/)
+- [Caddy Documentation](https://caddyserver.com/docs/)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) before submitting pull requests.
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
 ## 📄 License
 
@@ -287,407 +288,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [n8n](https://n8n.io/) for the amazing workflow automation platform
-- [Supabase](https://supabase.com/) for the open source Firebase alternative
-- [Open WebUI](https://openwebui.com/) for the beautiful chat interface
+- [n8n](https://n8n.io/) for the workflow automation platform
+- [Open WebUI](https://openwebui.com/) for the AI chat interface
 - [MinIO](https://min.io/) for S3-compatible storage
 - [Neo4j](https://neo4j.com/) for graph database capabilities
-- [SearXNG](https://searxng.org/) for private web search
-
-## 🌐 Domain and DNS Configuration
-
-### 1. DNS Records Setup
-
-You'll need to create the following DNS A records pointing to your server's IP address:
-
-| Type  | Name        | Value               | TTL     |
-|-------|-------------|---------------------|---------|
-| A     | @           | your.server.ip.addr | 3600    |
-| A     | n8n        | your.server.ip.addr | 3600    |
-| A     | minio      | your.server.ip.addr | 3600    |
-| A     | supabase   | your.server.ip.addr | 3600    |
-| A     | neo4j      | your.server.ip.addr | 3600    |
-| A     | nca        | your.server.ip.addr | 3600    |
-
-Replace `your.server.ip.addr` with your actual server IP address.
-
-### 2. Domain Configuration
-
-1. Set your domain in the `.env` file:
-   ```bash
-   # Base domain (e.g., example.com or client.yourdomain.com)
-   BASE_DOMAIN=yourdomain.com
-   
-   # Protocol (http or https)
-   PROTOCOL=https
-   
-   # Server IP Address (for DNS records)
-   SERVER_IP=your.server.ip.addr
-   ```
-
-2. Update these environment variables in your deployment environment.
-
-### 3. SSL Certificates
-
-Caddy will automatically obtain and renew SSL certificates from Let's Encrypt. Make sure:
-- Ports 80 and 443 are open in your firewall
-- Your domain's DNS has propagated
-- The domain resolves to your server's IP address
-
-## 🔐 Setting Up Credentials
-
-### Credentials Configuration
-
-1. **Create `credentials.json`**:
-   - Copy the template file: `cp n8n/backup/credentials.template.json n8n/backup/credentials.json`
-   - Edit the file and replace all placeholder values with your actual API keys and credentials
-
-2. **Required Services**:
-   - **Telegram Bot** (if using Telegram integration)
-   - **OpenAI API** (for AI capabilities)
-   - **Google Services** (if using Google Docs/Drive integration)
-   - **Supabase** (for database and authentication)
-   - **Other services** as needed for your workflows
-
-3. **Security Notes**:
-   - Never commit `credentials.json` to version control (it's in .gitignore)
-   - Use environment variables for sensitive data in production
-   - Rotate API keys regularly
-   - Restrict API key permissions to minimum required scopes
-
-## Important Links
-
-- [Local AI community](https://thinktank.ottomator.ai/c/local-ai/18) forum over in the oTTomator Think Tank
-
-- [GitHub Kanban board](https://github.com/users/coleam00/projects/2/views/1) for feature implementation and bug squashing.
-
-- [Original Local AI Starter Kit](https://github.com/n8n-io/self-hosted-ai-starter-kit) by the n8n team
-
-- Download my N8N + OpenWebUI integration [directly on the Open WebUI site.](https://openwebui.com/f/coleam/n8n_pipe/) (more instructions below)
-
-![n8n.io - Screenshot](https://raw.githubusercontent.com/n8n-io/self-hosted-ai-starter-kit/main/assets/n8n-demo.gif)
-
-Curated by <https://github.com/n8n-io> and <https://github.com/coleam00>, it combines the self-hosted n8n
-platform with a curated list of compatible AI products and components to
-quickly get started with building self-hosted AI workflows.
-
-### What’s included
-
-✅ [**Self-hosted n8n**](https://n8n.io/) - Low-code platform with over 400
-integrations and advanced AI components
-
-✅ [**Supabase**](https://supabase.com/) - Open source database as a service -
-most widely used database for AI agents
-
-✅ [**Open WebUI**](https://openwebui.com/) - ChatGPT-like interface to
-privately interact with your local models and N8N agents
-
-✅ [**Qdrant**](https://qdrant.tech/) - Open source, high performance vector
-store with an comprehensive API. Even though you can use Supabase for RAG, this was
-kept unlike Postgres since it's faster than Supabase so sometimes is the better option.
-
-✅ [**Neo4j**](https://neo4j.com/) - Knowledge graph engine that powers tools like GraphRAG, LightRAG, and Graphiti 
-
-✅ [**SearXNG**](https://searxng.org/) - Open source, free internet metasearch engine which aggregates 
-results from up to 229 search services. Users are neither tracked nor profiled, hence the fit with the local AI package.
-
-✅ [**Caddy**](https://caddyserver.com/) - Managed HTTPS/TLS for custom domains
-
-## Prerequisites
-
-Before you begin, make sure you have the following software installed:
-
-- [Python](https://www.python.org/downloads/) - Required to run the setup script
-- [Git/GitHub Desktop](https://desktop.github.com/) - For easy repository management
-- [Docker/Docker Desktop](https://www.docker.com/products/docker-desktop/) - Required to run all services
-
-## Installation
-
-Clone the repository and navigate to the project directory:
-```bash
-git clone -b stable https://github.com/coleam00/local-ai-packaged.git
-cd local-ai-packaged
-```
-
-Before running the services, you need to set up your environment variables for Supabase following their [self-hosting guide](https://supabase.com/docs/guides/self-hosting/docker#securing-your-services).
-
-1. Make a copy of `.env.example` and rename it to `.env` in the root directory of the project
-2. Set the following required environment variables:
-   ```bash
-   ############
-   # N8N Configuration
-   ############
-   N8N_ENCRYPTION_KEY=
-   N8N_USER_MANAGEMENT_JWT_SECRET=
-
-   ############
-   # Supabase Secrets
-   ############
-   POSTGRES_PASSWORD=
-   JWT_SECRET=
-   ANON_KEY=
-   SERVICE_ROLE_KEY=
-   DASHBOARD_USERNAME=
-   DASHBOARD_PASSWORD=
-   POOLER_TENANT_ID=
-
-   ############
-   # Neo4j Secrets
-   ############   
-   NEO4J_AUTH=
-
-   ############
-   # MinIO credentials
-   ############
-   MINIO_ROOT_PASSWORD=
-   ```
-
-> [!IMPORTANT]
-> Make sure to generate secure random values for all secrets. Never use the example values in production.
-
-3. Set the following environment variables if deploying to production, otherwise leave commented:
-   ```bash
-   ############
-   # Caddy Config
-   ############
-
-   N8N_HOSTNAME=n8n.yourdomain.com
-   WEBUI_HOSTNAME=:openwebui.yourdomain.com
-   SUPABASE_HOSTNAME=:supabase.yourdomain.com
-   OLLAMA_HOSTNAME=:ollama.yourdomain.com
-   SEARXNG_HOSTNAME=searxng.yourdomain.com
-   NEO4J_HOSTNAME=neo4j.yourdomain.com
-   LETSENCRYPT_EMAIL=your-email-address
-   ```   
-
----
-
-The project includes a `start_services.py` script that handles starting both the Supabase and local AI services. The script accepts a `--profile` flag to specify which GPU configuration to use.
-
-### For Nvidia GPU users
-
-```bash
-python start_services.py
-```
-```
-
-Additionally, after you see "Editor is now accessible via: http://localhost:5678/":
-
-1. Head to http://localhost:5678/home/credentials
-2. Click on "Local Ollama service"
-3. Change the base URL to "http://host.docker.internal:11434/"
-
-### For everyone else
-
-```bash
-python start_services.py --profile cpu
-```
-
-### The environment argument
-The **start-services.py** script offers the possibility to pass one of two options for the environment argument, **private** (default environment) and **public**:
-- **private:** you are deploying the stack in a safe environment, hence a lot of ports can be made accessible without having to worry about security
-- **public:** the stack is deployed in a public environment, which means the attack surface should be made as small as possible. All ports except for 80 and 443 are closed
-
-The stack initialized with
-```bash
-   python start_services.py --environment private
-   ```
-equals the one initialized with
-```bash
-   python start_services.py
-   ```
-
-## Deploying to the Cloud
-
-### Prerequisites for the below steps
-
-- Linux machine (preferably Unbuntu) with Nano, Git, and Docker installed
-
-### Extra steps
-
-Before running the above commands to pull the repo and install everything:
-
-1. Run the commands as root to open up the necessary ports:
-   - ufw enable
-   - ufw allow 80 && ufw allow 443
-   - ufw reload
-   ---
-   **WARNING**
-
-   ufw does not shield ports published by docker, because the iptables rules configured by docker are analyzed before those configured by ufw. There is a solution to change this behavior, but that is out of scope for this project. Just make sure that all traffic runs through the caddy service via port 443. Port 80 should only be used to redirect to port 443.
-
-   ---
-2. Run the **start-services.py** script with the environment argument **public** to indicate you are going to run the package in a public environment. The script will make sure that all ports, except for 80 and 443, are closed down, e.g.
-
-```bash
-   python3 start_services.py --profile gpu-nvidia --environment public
-   ```
-
-3. Set up A records for your DNS provider to point your subdomains you'll set up in the .env file for Caddy
-to the IP address of your cloud instance.
-
-   For example, A record to point n8n to [cloud instance IP] for n8n.yourdomain.com
-
-
-**NOTE**: If you are using a cloud machine without the "docker compose" command available by default, such as a Ubuntu GPU instance on DigitalOcean, run these commands before running start_services.py:
-
-- DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\\" -f4)
-- sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
-- sudo chmod +x /usr/local/bin/docker-compose
-- sudo mkdir -p /usr/local/lib/docker/cli-plugins
-- sudo ln -s /usr/local/bin/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
-
-## ⚡️ Quick start and usage
-
-The main component of the self-hosted AI starter kit is a docker compose file
-pre-configured with network and disk so there isn’t much else you need to
-install. After completing the installation steps above, follow the steps below
-to get started.
-
-1. Open <http://localhost:5678/> in your browser to set up n8n. You’ll only
-   have to do this once. You are NOT creating an account with n8n in the setup here,
-   it is only a local account for your instance!
-2. Open the included workflow:
-   <http://localhost:5678/workflow/vTN9y2dLXqTiDfPT>
-3. Create credentials for every service:
-   
-   Ollama URL: http://ollama:11434
-
-   Postgres (through Supabase): use DB, username, and password from .env. IMPORTANT: Host is 'db'
-   Since that is the name of the service running Supabase
-
-   Qdrant URL: http://qdrant:6333 (API key can be whatever since this is running locally)
-
-   Google Drive: Follow [this guide from n8n](https://docs.n8n.io/integrations/builtin/credentials/google/).
-   Don't use localhost for the redirect URI, just use another domain you have, it will still work!
-   Alternatively, you can set up [local file triggers](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/).
-4. Select **Test workflow** to start running the workflow.
-5. If this is the first time you’re running the workflow, you may need to wait
-   until Ollama finishes downloading Llama3.1. You can inspect the docker
-   console logs to check on the progress.
-6. Make sure to toggle the workflow as active and copy the "Production" webhook URL!
-7. Open <http://localhost:3000/> in your browser to set up Open WebUI.
-You’ll only have to do this once. You are NOT creating an account with Open WebUI in the 
-setup here, it is only a local account for your instance!
-8. Go to Workspace -> Functions -> Add Function -> Give name + description then paste in
-the code from `n8n_pipe.py`
-
-   The function is also [published here on Open WebUI's site](https://openwebui.com/f/coleam/n8n_pipe/).
-
-9. Click on the gear icon and set the n8n_url to the production URL for the webhook
-you copied in a previous step.
-10. Toggle the function on and now it will be available in your model dropdown in the top left! 
-
-To open n8n at any time, visit <http://localhost:5678/> in your browser.
-To open Open WebUI at any time, visit <http://localhost:3000/>.
-
-With your n8n instance, you’ll have access to over 400 integrations and a
-suite of basic and advanced AI nodes such as
-[AI Agent](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/),
-[Text classifier](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.text-classifier/),
-and [Information Extractor](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.information-extractor/)
-nodes. To keep everything local, just remember to use the Ollama node for your
-language model and Qdrant as your vector store.
-
-> [!NOTE]
-> This starter kit is designed to help you get started with self-hosted AI
-> workflows. While it’s not fully optimized for production environments, it
-> combines robust components that work well together for proof-of-concept
-> projects. You can customize it to meet your specific needs
-
-## Upgrading
-
-To update all containers to their latest versions (n8n, Open WebUI, etc.), run these commands:
-
-```bash
-# Stop all services
-docker compose -p localai -f docker-compose.yml --profile <your-profile> down
-
-# Pull latest versions of all containers
-docker compose -p localai -f docker-compose.yml --profile <your-profile> pull
-
-# Start services again with your desired profile
-python start_services.py --profile <your-profile>
-```
-
-Replace `<your-profile>` with one of: `cpu`, `gpu-nvidia`, `gpu-amd`, or `none`.
-
-Note: The `start_services.py` script itself does not update containers - it only restarts them or pulls them if you are downloading these containers for the first time. To get the latest versions, you must explicitly run the commands above.
-
-## Troubleshooting
-
-Here are solutions to common issues you might encounter:
-
-### Supabase Issues
-
-- **Supabase Pooler Restarting**: If the supabase-pooler container keeps restarting itself, follow the instructions in [this GitHub issue](https://github.com/supabase/supabase/issues/30210#issuecomment-2456955578).
-
-- **Supabase Analytics Startup Failure**: If the supabase-analytics container fails to start after changing your Postgres password, delete the folder `supabase/docker/volumes/db/data`.
-
-- **If using Docker Desktop**: Go into the Docker settings and make sure "Expose daemon on tcp://localhost:2375 without TLS" is turned on
-
-- **Supabase Service Unavailable** - Make sure you don't have an "@" character in your Postgres password! If the connection to the kong container is working (the container logs say it is receiving requests from n8n) but n8n says it cannot connect, this is generally the problem from what the community has shared. Other characters might not be allowed too, the @ symbol is just the one I know for sure!
-
-- **SearXNG Restarting**: If the SearXNG container keeps restarting, run the command "chmod 755 searxng" within the local-ai-packaged folder so SearXNG has the permissions it needs to create the uwsgi.ini file.
-
-- **Files not Found in Supabase Folder** - If you get any errors around files missing in the supabase/ folder like .env, docker/docker-compose.yml, etc. this most likely means you had a "bad" pull of the Supabase GitHub repository when you ran the start_services.py script. Delete the supabase/ folder within the Local AI Package folder entirely and try again.
-
-
-## 👓 Recommended reading
-
-n8n is full of useful content for getting started quickly with its AI concepts
-and nodes. If you run into an issue, go to [support](#support).
-
-- [AI agents for developers: from theory to practice with n8n](https://blog.n8n.io/ai-agents/)
-- [Tutorial: Build an AI workflow in n8n](https://docs.n8n.io/advanced-ai/intro-tutorial/)
-- [Langchain Concepts in n8n](https://docs.n8n.io/advanced-ai/langchain/langchain-n8n/)
-- [Demonstration of key differences between agents and chains](https://docs.n8n.io/advanced-ai/examples/agent-chain-comparison/)
-- [What are vector databases?](https://docs.n8n.io/advanced-ai/examples/understand-vector-databases/)
-
-## 🎥 Video walkthrough
-
-- [Cole's Guide to the Local AI Starter Kit](https://youtu.be/pOsO40HSbOo)
-
-## 🛍️ More AI templates
-
-For more AI workflow ideas, visit the [**official n8n AI template
-gallery**](https://n8n.io/workflows/?categories=AI). From each workflow,
-select the **Use workflow** button to automatically import the workflow into
-your local n8n instance.
-
-### Learn AI key concepts
-
-- [AI Agent Chat](https://n8n.io/workflows/1954-ai-agent-chat/)
-- [AI chat with any data source (using the n8n workflow too)](https://n8n.io/workflows/2026-ai-chat-with-any-data-source-using-the-n8n-workflow-tool/)
-- [Chat with OpenAI Assistant (by adding a memory)](https://n8n.io/workflows/2098-chat-with-openai-assistant-by-adding-a-memory/)
-- [Use an open-source LLM (via HuggingFace)](https://n8n.io/workflows/1980-use-an-open-source-llm-via-huggingface/)
-- [Chat with PDF docs using AI (quoting sources)](https://n8n.io/workflows/2165-chat-with-pdf-docs-using-ai-quoting-sources/)
-- [AI agent that can scrape webpages](https://n8n.io/workflows/2006-ai-agent-that-can-scrape-webpages/)
-
-### Local AI templates
-
-- [Tax Code Assistant](https://n8n.io/workflows/2341-build-a-tax-code-assistant-with-qdrant-mistralai-and-openai/)
-- [Breakdown Documents into Study Notes with MistralAI and Qdrant](https://n8n.io/workflows/2339-breakdown-documents-into-study-notes-using-templating-mistralai-and-qdrant/)
-- [Financial Documents Assistant using Qdrant and](https://n8n.io/workflows/2335-build-a-financial-documents-assistant-using-qdrant-and-mistralai/) [ Mistral.ai](http://mistral.ai/)
-- [Recipe Recommendations with Qdrant and Mistral](https://n8n.io/workflows/2333-recipe-recommendations-with-qdrant-and-mistral/)
-
-## Tips & tricks
-
-### Accessing local files
-
-The self-hosted AI starter kit will create a shared folder (by default,
-located in the same directory) which is mounted to the n8n container and
-allows n8n to access files on disk. This folder within the n8n container is
-located at `/data/shared` -- this is the path you’ll need to use in nodes that
-interact with the local filesystem.
-
-**Nodes that interact with the local filesystem**
-
-- [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filesreadwrite/)
-- [Local File Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/)
-- [Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/)
-
-## 📜 License
-
-This project (originally created by the n8n team, link at the top of the README) is licensed under the Apache License 2.0 - see the
-[LICENSE](LICENSE) file for details.
+- All other open-source projects that make this possible
