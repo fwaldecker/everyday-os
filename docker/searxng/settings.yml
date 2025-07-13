@@ -1,15 +1,64 @@
-# see https://docs.searxng.org/admin/settings/settings.html#settings-use-default-settings
+# SearXNG Configuration - Custom settings for everyday-os
+# See: https://docs.searxng.org/admin/settings/settings.html
+
+# Use default settings as a base
 use_default_settings: true
+
+# Server configuration
 server:
-  # base_url is defined in the SEARXNG_BASE_URL environment variable, see .env and docker-compose.yml
-  secret_key: "ultrasecretkey"  # change this!
-  limiter: false
+  # Base URL is set via environment variable SEARXNG_BASE_URL
+  secret_key: "${ULTRA_SECRET_KEY}"  # Will be replaced by environment variable
+  base_url: "${BASE_URL}"  # Will be replaced by environment variable
+  
+  # Security settings
+  limiter: true
   image_proxy: true
+  http_protocol_version: '1.1'
+  
+  # Performance
+  cache:
+    type: 'redis'
+    url: 'redis://redis:6379/0'
+    
+  rate_limit: 200  # requests per minute
+  
+# UI Configuration
 ui:
   static_use_hash: true
+  theme: simple
+  default_locale: en
+  results_on_new_tab: true
+  
+# Search Configuration
+search:
+  safe_search: 0  # 0=None, 1=Moderate, 2=Strict
+  autocomplete: "google"
+  formats:
+    - html
+    - json
+  
+# Redis Configuration
 redis:
   url: redis://redis:6379/0
-search:
-    formats:
-        - html
-        - json
+  
+# Engines Configuration
+engines:
+  - name: google
+    shortcut: g
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: duckduckgo
+    disabled: false
+  - name: wikipedia
+    disabled: false
+  - name: youtube
+    disabled: false
+    
+# Enable/disable specific engines
+enable_metrics: false
+
+# Logging
+logging:
+  level: WARNING
+  loglevel: WARNING

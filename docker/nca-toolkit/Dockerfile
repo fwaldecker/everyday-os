@@ -6,6 +6,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the NCA Toolkit repository
@@ -13,6 +14,9 @@ RUN git clone https://github.com/stephengpope/no-code-architects-toolkit .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install missing jsonschema dependency
+RUN pip install --no-cache-dir jsonschema
 
 # Expose the port the app runs on
 EXPOSE 8010

@@ -69,7 +69,7 @@ langfuse.{$BASE_DOMAIN} {
 nca.{$BASE_DOMAIN} {
     # Handle ACME challenge
     
-    reverse_proxy nca-toolkit:8010 {
+    reverse_proxy nca-toolkit:8080 {
         header_up Host {host}
         header_up X-Real-IP {remote}
         header_up X-Forwarded-For {remote}
