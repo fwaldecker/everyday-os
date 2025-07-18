@@ -33,11 +33,10 @@ x-n8n: &service-n8n
     - N8N_PERSONALIZATION_ENABLED=false
     - N8N_ENCRYPTION_KEY
     - N8N_USER_MANAGEMENT_JWT_SECRET
-    - N8N_HOST=0.0.0.0
-    - N8N_PORT=5678
-    - N8N_PROTOCOL=http
+    - N8N_PROTOCOL=https
     - N8N_WEBHOOK_URL=${PROTOCOL}://n8n.${BASE_DOMAIN}
     - N8N_EDITOR_BASE_URL=${PROTOCOL}://n8n.${BASE_DOMAIN}
+    - WEBHOOK_URL=${PROTOCOL}://n8n.${BASE_DOMAIN}
     - N8N_MAX_UPLOAD_SIZE=5GB
     - N8N_PAYLOAD_SIZE_MAX=5120  # 5GB in MB
     - N8N_TIMEOUT=7200000  # 2 hours
@@ -346,11 +345,15 @@ services:
       - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin}
       - S3_REGION=us-east-1
       - S3_BUCKET_NAME=nca
+      - S3_PUBLIC_URL=${PROTOCOL}://minio-api.${BASE_DOMAIN}
       
       # Application Configuration
       - NCA_HOST=0.0.0.0
       - NCA_PORT=8080
       - NCA_DEBUG=false
+      
+      # Worker Configuration
+      - GUNICORN_WORKERS=1
       - NCA_LOG_LEVEL=info
       - NCA_ALLOWED_HOSTS=nca-toolkit,${BASE_DOMAIN},nca.${BASE_DOMAIN}
       - NCA_CSRF_TRUSTED_ORIGINS=${PROTOCOL}://nca.${BASE_DOMAIN}
@@ -375,7 +378,7 @@ services:
       #   condition: service_healthy
       
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; req = urllib.request.Request('http://localhost:8080/v1/toolkit/authenticate', headers={'X-API-Key': 'nca-toolkit-default-api-key'}); urllib.request.urlopen(req)\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; req = urllib.request.Request('http://localhost:8080/v1/toolkit/authenticate', headers={'X-API-Key': '${NCA_API_KEY:-nca-toolkit-default-api-key}'}); urllib.request.urlopen(req)\""]
       interval: 30s
       timeout: 10s
       retries: 3
