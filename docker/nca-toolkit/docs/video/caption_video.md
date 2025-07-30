@@ -4,6 +4,48 @@
 
 The `/v1/video/caption` endpoint is part of the Video API and is responsible for adding captions to a video file. It accepts a video URL, caption text, and various styling options for the captions. The endpoint utilizes the `process_captioning_v1` service to generate a captioned video file, which is then uploaded to cloud storage, and the cloud URL is returned in the response.
 
+## ⚠️ CRITICAL: Payload Structure Requirements
+
+**The API expects a flat JSON structure with ALL parameters at the root level of the request body.**
+
+### ✅ CORRECT Payload Structure:
+```json
+{
+    "video_url": "https://example.com/video.mp4",
+    "video_crf": 18,                    // ← At root level
+    "video_preset": "slow",             // ← At root level
+    "settings": {                       // ← At root level
+        "font_size": 72,
+        "style": "highlight"
+    },
+    "webhook_url": "https://...",       // ← At root level
+    "id": "request-123"                 // ← At root level
+}
+```
+
+### ❌ INCORRECT - Never wrap the payload:
+```json
+{
+    "captionApiPayload": {              // ❌ WRONG - No wrapper objects!
+        "video_url": "https://...",
+        "video_crf": 18,
+        "video_preset": "slow"
+    }
+}
+```
+
+### ❌ INCORRECT - Quality parameters do NOT go inside settings:
+```json
+{
+    "video_url": "https://...",
+    "settings": {
+        "font_size": 72,
+        "video_crf": 18,                // ❌ WRONG - Must be at root!
+        "video_preset": "slow"          // ❌ WRONG - Must be at root!
+    }
+}
+```
+
 ## 2. Endpoint
 
 **URL:** `/v1/video/caption`
@@ -34,6 +76,14 @@ The request body must be a JSON object with the following properties:
   - `start`: (string, required) The start time of the excluded range, as a string timecode in `hh:mm:ss.ms` format (e.g., `00:01:23.456`).
   - `end`: (string, required) The end time, as a string timecode in `hh:mm:ss.ms` format, which must be strictly greater than `start`.
   If either value is not a valid timecode string, or if `end` is not greater than `start`, the request will return an error.
+- `video_crf` (integer, optional): The Constant Rate Factor for video quality (0-51, where lower values mean higher quality). Defaults to 18 for visually lossless quality. Common values:
+  - 0: Lossless
+  - 18: Visually lossless (recommended for high quality)
+  - 23: Good quality (FFmpeg default)
+  - 28: Acceptable quality with smaller file size
+  - 51: Worst quality
+- `video_preset` (string, optional): The encoding speed preset. Slower presets provide better compression. Options: "ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow". Defaults to "medium".
+- `video_bitrate` (string, optional): Target video bitrate (e.g., "5M", "8000k"). When specified, overrides CRF for constant bitrate encoding.
 
 #### Settings Schema
 
@@ -183,13 +233,50 @@ This minimal request will automatically transcribe the video and add white capti
 }
 ```
 
+#### Example 6: High Quality Video Preservation
+```json
+{
+    "video_url": "https://example.com/video.mp4",
+    "video_crf": 18,
+    "video_preset": "slow",
+    "settings": {
+        "style": "classic",
+        "line_color": "#FFFFFF",
+        "outline_color": "#000000",
+        "position": "bottom_center",
+        "font_family": "Arial",
+        "font_size": 24
+    }
+}
+```
+This example uses CRF 18 for visually lossless quality and "slow" preset for better compression efficiency.
+
+#### Example 7: Balanced Quality with Specific Bitrate
+```json
+{
+    "video_url": "https://example.com/video.mp4",
+    "video_bitrate": "8M",
+    "video_preset": "medium",
+    "settings": {
+        "style": "karaoke",
+        "line_color": "#FFFFFF",
+        "word_color": "#FFFF00",
+        "outline_color": "#000000",
+        "font_size": 28
+    }
+}
+```
+This example uses a constant bitrate of 8 Mbps for predictable file sizes.
+
 ```bash
 curl -X POST \
      -H "x-api-key: YOUR_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{
         "video_url": "https://example.com/video.mp4",
-        "settings": {
+        "video_crf": 18,                    # Quality parameter at ROOT level
+        "video_preset": "slow",             # Quality parameter at ROOT level
+        "settings": {                       # Settings object at ROOT level
             "line_color": "#FFFFFF",
             "word_color": "#FFFF00",
             "outline_color": "#000000",
@@ -208,7 +295,8 @@ curl -X POST \
                 "replace": ""
             }
         ],
-        "id": "custom-request-id"
+        "webhook_url": "https://example.com/webhook",  # Optional, at ROOT level
+        "id": "custom-request-id"                      # Optional, at ROOT level
     }' \
     https://your-api-endpoint.com/v1/video/caption
 ```
@@ -313,9 +401,33 @@ The endpoint handles the following common errors:
 
 Additionally, the main application context (`app.py`) includes error handling for queue overload. If the maximum queue length (`MAX_QUEUE_LENGTH`) is set and the queue size reaches that limit, a 429 Too Many Requests error is returned with a descriptive message.
 
+### Common Integration Errors
+
+#### "Additional properties are not allowed" Error
+
+If you receive this error:
+```json
+{
+    "message": "Invalid payload: Additional properties are not allowed ('video_crf', 'video_preset' were unexpected)"
+}
+```
+
+**This means your payload structure is incorrect.** The API validation uses `"additionalProperties": false`, which strictly enforces the schema.
+
+**Common causes:**
+1. **Wrapped payload** - Your integration platform (e.g., n8n, Zapier) may be wrapping your payload in an extra object layer
+2. **Wrong parameter placement** - Quality parameters (`video_crf`, `video_preset`, `video_bitrate`) must be at the root level, NOT inside `settings`
+3. **Extra fields** - Including fields not defined in the schema
+
+**Solution:** Ensure your HTTP request body contains ONLY the flat JSON structure shown in the examples, with all parameters at the root level.
+
 ## 6. Usage Notes
 
 - The `video_url` parameter must be a valid URL pointing to a video file (MP4, MOV, etc.).
+- **Video Quality**: By default, the endpoint uses CRF 18 for high-quality output. You can adjust this using:
+  - `video_crf`: Lower values (0-17) for higher quality, higher values (19-51) for smaller files
+  - `video_preset`: Slower presets (e.g., "slow", "veryslow") provide better compression at the same quality
+  - `video_bitrate`: Use this for constant bitrate encoding when file size predictability is important
 - The `captions` parameter is optional and can be used in multiple ways:
   - If not provided, the endpoint will automatically transcribe the audio and generate captions
   - If provided as plain text, the text will be used as captions for the entire video
@@ -352,3 +464,63 @@ Additionally, the main application context (`app.py`) includes error handling fo
 - Provide descriptive and meaningful `id` values to easily identify requests in logs and responses.
 - Use the `replace` parameter judiciously to avoid unintended text replacements in the captions.
 - Consider caching the captioned video files for frequently requested videos to improve performance and reduce processing time.
+
+## 9. Integration Guide for n8n and Webhook Platforms
+
+### n8n Integration
+
+When using n8n's HTTP Request node to call this endpoint:
+
+1. **Set Body Content Type** to `JSON`
+2. **Use "Raw JSON" mode** if your data is nested
+3. **Extract nested payloads** before sending
+
+#### ✅ Correct n8n Setup:
+If your workflow data looks like this:
+```json
+{
+    "captionApiPayload": {
+        "video_url": "...",
+        "video_crf": 18,
+        "video_preset": "slow"
+    }
+}
+```
+
+Use an expression to extract just the inner object:
+```
+{{ $json.captionApiPayload }}
+```
+
+#### ❌ Common n8n Mistakes:
+- Sending the entire workflow item instead of just the payload
+- Using "Form Data" instead of "JSON" body type
+- Not extracting nested objects from previous nodes
+
+### Webhook/Automation Platform Guidelines
+
+If your platform wraps API payloads:
+1. **Identify the wrapper** - Check if your platform adds layers like `data`, `payload`, or custom fields
+2. **Extract the actual payload** - Use your platform's expression language to get only the caption data
+3. **Send raw JSON** - Ensure the HTTP body contains only the flat structure required by the API
+
+### Example: Correct Payload Structure
+This is what the API actually receives in the HTTP request body:
+```json
+{
+    "video_url": "https://example.com/video.mp4",
+    "video_crf": 18,
+    "video_preset": "slow",
+    "settings": {
+        "x": 540,
+        "y": 825,
+        "font_family": "The Bold Font",
+        "font_size": 72,
+        "style": "highlight"
+    },
+    "id": "recRRu2riPpOewOjy",
+    "webhook_url": "https://hooks.airtable.com/..."
+}
+```
+
+No wrapper objects, no extra nesting - just the parameters directly in the root JSON object.
