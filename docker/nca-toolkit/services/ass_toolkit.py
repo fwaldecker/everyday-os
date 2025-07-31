@@ -737,7 +737,7 @@ def normalize_exclude_time_ranges(exclude_time_ranges):
         norm.append({"start": start, "end": end})
     return norm
 
-def generate_ass_captions_v1(video_url, captions, settings, replace, exclude_time_ranges, job_id, language='auto', PlayResX=None, PlayResY=None):
+def generate_ass_captions_v1(video_url, captions, settings, replace, exclude_time_ranges, job_id, language='auto', PlayResX=None, PlayResY=None, video_crf=None, video_preset=None, video_bitrate=None):
     """
     Captioning process with transcription fallback and multiple styles.
     Integrates with the updated logic for positioning and alignment.

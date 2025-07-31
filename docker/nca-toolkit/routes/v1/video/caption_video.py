@@ -74,6 +74,16 @@ logger = logging.getLogger(__name__)
             },
             "additionalProperties": False
         },
+        "video_crf": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 51
+        },
+        "video_preset": {
+            "type": "string",
+            "enum": ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"]
+        },
+        "video_bitrate": {"type": "string"},
         "replace": {
             "type": "array",
             "items": {
@@ -99,13 +109,7 @@ logger = logging.getLogger(__name__)
         },
         "webhook_url": {"type": "string", "format": "uri"},
         "id": {"type": "string"},
-        "language": {"type": "string"},
-        "video_crf": {"type": "integer", "minimum": 0, "maximum": 51},
-        "video_preset": {
-            "type": "string",
-            "enum": ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"]
-        },
-        "video_bitrate": {"type": "string"}
+        "language": {"type": "string"}
     },
     "required": ["video_url"],
     "additionalProperties": False
@@ -120,15 +124,14 @@ def caption_video_v1(job_id, data):
     webhook_url = data.get('webhook_url')
     id = data.get('id')
     language = data.get('language', 'auto')
-    video_crf = data.get('video_crf', 18)  # Default to 18 for high quality
-    video_preset = data.get('video_preset', 'medium')
+    video_crf = data.get('video_crf')
+    video_preset = data.get('video_preset')
     video_bitrate = data.get('video_bitrate')
 
     logger.info(f"Job {job_id}: Received v1 captioning request for {video_url}")
     logger.info(f"Job {job_id}: Settings received: {settings}")
     logger.info(f"Job {job_id}: Replace rules received: {replace}")
     logger.info(f"Job {job_id}: Exclude time ranges received: {exclude_time_ranges}")
-    logger.info(f"Job {job_id}: Video quality settings - CRF: {video_crf}, Preset: {video_preset}, Bitrate: {video_bitrate}")
 
     try:
         # Do NOT combine position and alignment. Keep them separate.
@@ -136,7 +139,8 @@ def caption_video_v1(job_id, data):
         # This ensures position and alignment remain independent keys.
         
         # Process video with the enhanced v1 service
-        output = generate_ass_captions_v1(video_url, captions, settings, replace, exclude_time_ranges, job_id, language)
+        output = generate_ass_captions_v1(video_url, captions, settings, replace, exclude_time_ranges, job_id, language, 
+                                          video_crf=video_crf, video_preset=video_preset, video_bitrate=video_bitrate)
         
         if isinstance(output, dict) and 'error' in output:
             # Check if this is a font-related error by checking for 'available_fonts' key
@@ -170,26 +174,27 @@ def caption_video_v1(job_id, data):
         try:
             import ffmpeg
             
-            # Build output options with quality settings
-            output_options = {
+            # Build output arguments
+            output_args = {
                 'vf': f"subtitles='{ass_path}'",
-                'acodec': 'copy',
-                'vcodec': 'libx264',
-                'crf': str(video_crf),
-                'preset': video_preset
+                'acodec': 'copy'
             }
             
-            # Add bitrate if specified
+            # Add video quality parameters if specified
             if video_bitrate:
-                output_options['b:v'] = video_bitrate
-                # Remove CRF when using bitrate (they're mutually exclusive)
-                del output_options['crf']
+                output_args['video_bitrate'] = video_bitrate
+            else:
+                # Use CRF if no bitrate specified
+                output_args['crf'] = video_crf if video_crf is not None else 18
+                
+            if video_preset:
+                output_args['preset'] = video_preset
             
             ffmpeg.input(video_path).output(
                 output_path,
-                **output_options
+                **output_args
             ).run(overwrite_output=True)
-            logger.info(f"Job {job_id}: FFmpeg processing completed with CRF={video_crf}, preset={video_preset}. Output saved to {output_path}")
+            logger.info(f"Job {job_id}: FFmpeg processing completed. Output saved to {output_path}")
         except Exception as e:
             logger.error(f"Job {job_id}: FFmpeg error: {str(e)}")
             return {"error": f"FFmpeg error: {str(e)}"}, "/v1/video/caption", 500
