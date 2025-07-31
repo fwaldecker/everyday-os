@@ -1,235 +1,279 @@
-# Step-by-Step Guide: Adding Quality Parameters to Caption Endpoint
+# Developer Guide: Adding Video Quality Parameters to Caption Endpoint
 
-This guide explains how to use the video quality parameters (`video_crf`, `video_preset`, `video_bitrate`) when calling the `/v1/video/caption` endpoint.
+This guide provides step-by-step instructions for developers to add video quality parameters (`video_crf`, `video_preset`, `video_bitrate`) to their NCA Toolkit caption endpoint implementation.
 
-## Quick Reference
+## Overview
 
-### Available Quality Parameters
+This guide will help you modify your NCA Toolkit codebase to support video quality parameters in the `/v1/video/caption` endpoint, giving users control over output video quality and file size.
 
-1. **`video_crf`** (integer, 0-51)
-   - Controls video quality vs file size
-   - Lower = better quality, larger file
-   - Default: 18 (visually lossless)
+## Prerequisites
 
-2. **`video_preset`** (string)
-   - Controls encoding speed vs compression efficiency
-   - Slower = better compression, longer processing
-   - Options: `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, `veryslow`
-   - Default: `medium`
+- Access to your NCA Toolkit codebase
+- Basic understanding of Python and Flask
+- Familiarity with FFmpeg parameters
 
-3. **`video_bitrate`** (string)
-   - Forces constant bitrate instead of variable quality
-   - Format: `"5M"`, `"8000k"`, etc.
-   - Overrides CRF when specified
+## Step 1: Update Route Schema
 
-## Step 1: Understand Your Quality Needs
+First, modify the route validation schema to accept the new parameters.
 
-### Choose Based on Use Case:
+### File: `routes/v1/video/caption_video.py`
 
-**For YouTube/Professional Content:**
-```json
-{
-    "video_crf": 18,
-    "video_preset": "slow"
-}
-```
+Locate the `@validate_payload` decorator and add the following parameters after the `exclude_time_ranges` definition:
 
-**For Quick Previews/Drafts:**
-```json
-{
-    "video_crf": 28,
-    "video_preset": "faster"
-}
-```
-
-**For File Size Constraints:**
-```json
-{
-    "video_bitrate": "5M",
-    "video_preset": "medium"
-}
-```
-
-## Step 2: Structure Your Request Correctly
-
-### ⚠️ CRITICAL: Parameters MUST be at the root level
-
-```json
-{
-    "video_url": "https://example.com/video.mp4",
-    "video_crf": 18,              // ✅ CORRECT - At root
-    "video_preset": "slow",       // ✅ CORRECT - At root
-    "settings": {                 // Caption styling settings
-        "font_size": 72,
-        "style": "highlight"
-    }
-}
-```
-
-### ❌ NEVER put quality parameters inside settings:
-```json
-{
-    "video_url": "https://example.com/video.mp4",
-    "settings": {
-        "font_size": 72,
-        "video_crf": 18,          // ❌ WRONG - Will cause error!
-        "video_preset": "slow"    // ❌ WRONG - Will cause error!
-    }
-}
-```
-
-## Step 3: Complete Examples
-
-### Example 1: High Quality for Final Production
-```json
-{
-    "video_url": "https://example.com/video.mp4",
-    "video_crf": 18,
-    "video_preset": "slow",
-    "settings": {
-        "style": "highlight",
-        "font_family": "The Bold Font",
-        "font_size": 72,
-        "line_color": "#00FFD1",
-        "word_color": "#FFC700",
-        "outline_color": "#080818"
+```python
+@validate_payload({
+    "type": "object",
+    "properties": {
+        # ... existing properties ...
+        "exclude_time_ranges": {
+            # ... existing definition ...
+        },
+        # ADD THESE NEW PARAMETERS:
+        "video_crf": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 51
+        },
+        "video_preset": {
+            "type": "string",
+            "enum": ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"]
+        },
+        "video_bitrate": {"type": "string"},
+        # ... rest of properties ...
     },
-    "webhook_url": "https://yourwebhook.com/endpoint"
-}
+    "required": ["video_url"],
+    "additionalProperties": False
+})
 ```
 
-### Example 2: Balanced Quality and Speed
-```json
-{
-    "video_url": "https://example.com/video.mp4",
+## Step 2: Update Route Handler
+
+Next, modify the route handler to extract and pass these parameters.
+
+### File: `routes/v1/video/caption_video.py`
+
+In the `caption_video_v1` function, add parameter extraction:
+
+```python
+def caption_video_v1(job_id, data):
+    video_url = data['video_url']
+    captions = data.get('captions')
+    settings = data.get('settings', {})
+    replace = data.get('replace', [])
+    exclude_time_ranges = data.get('exclude_time_ranges', [])
+    webhook_url = data.get('webhook_url')
+    id = data.get('id')
+    language = data.get('language', 'auto')
+    
+    # ADD THESE LINES:
+    video_crf = data.get('video_crf')
+    video_preset = data.get('video_preset')
+    video_bitrate = data.get('video_bitrate')
+```
+
+## Step 3: Update Service Function Call
+
+Pass the quality parameters to the service function.
+
+### File: `routes/v1/video/caption_video.py`
+
+Update the `generate_ass_captions_v1` function call:
+
+```python
+# CHANGE FROM:
+output = generate_ass_captions_v1(video_url, captions, settings, replace, exclude_time_ranges, job_id, language)
+
+# TO:
+output = generate_ass_captions_v1(video_url, captions, settings, replace, exclude_time_ranges, job_id, language, 
+                                  video_crf=video_crf, video_preset=video_preset, video_bitrate=video_bitrate)
+```
+
+## Step 4: Update Service Function Signature
+
+Modify the service function to accept the new parameters.
+
+### File: `services/ass_toolkit.py`
+
+Update the function signature:
+
+```python
+# CHANGE FROM:
+def generate_ass_captions_v1(video_url, captions, settings, replace, exclude_time_ranges, job_id, language='auto', PlayResX=None, PlayResY=None):
+
+# TO:
+def generate_ass_captions_v1(video_url, captions, settings, replace, exclude_time_ranges, job_id, language='auto', PlayResX=None, PlayResY=None, video_crf=None, video_preset=None, video_bitrate=None):
+```
+
+## Step 5: Update FFmpeg Rendering
+
+Modify the FFmpeg command to use the quality parameters.
+
+### File: `routes/v1/video/caption_video.py`
+
+Find the FFmpeg rendering section (around line 173-180) and replace it:
+
+```python
+# REPLACE THIS:
+try:
+    import ffmpeg
+    ffmpeg.input(video_path).output(
+        output_path,
+        vf=f"subtitles='{ass_path}'",
+        acodec='copy'
+    ).run(overwrite_output=True)
+
+# WITH THIS:
+try:
+    import ffmpeg
+    
+    # Build output arguments
+    output_args = {
+        'vf': f"subtitles='{ass_path}'",
+        'acodec': 'copy'
+    }
+    
+    # Add video quality parameters if specified
+    if video_bitrate:
+        output_args['video_bitrate'] = video_bitrate
+    else:
+        # Use CRF if no bitrate specified
+        output_args['crf'] = video_crf if video_crf is not None else 18
+        
+    if video_preset:
+        output_args['preset'] = video_preset
+    
+    ffmpeg.input(video_path).output(
+        output_path,
+        **output_args
+    ).run(overwrite_output=True)
+```
+
+## Step 6: Test Your Implementation
+
+Create a test script to verify the implementation:
+
+```python
+import requests
+import json
+
+# Test with quality parameters
+payload = {
+    "video_url": "https://example.com/test-video.mp4",
     "video_crf": 23,
     "video_preset": "medium",
     "settings": {
         "style": "classic",
-        "font_size": 48,
-        "position": "bottom_center"
+        "font_size": 48
     }
 }
+
+response = requests.post(
+    "https://your-api-endpoint/v1/video/caption",
+    headers={"x-api-key": "YOUR_API_KEY"},
+    json=payload
+)
+
+print(f"Status: {response.status_code}")
+print(f"Response: {response.json()}")
 ```
 
-### Example 3: Fixed Bitrate for Streaming
-```json
-{
-    "video_url": "https://example.com/video.mp4",
-    "video_bitrate": "6M",
-    "video_preset": "fast",
-    "settings": {
-        "style": "karaoke",
-        "font_size": 60
-    }
-}
-```
+## Step 7: Rebuild and Deploy
 
-## Step 4: Test Your Request
+After making all changes:
 
-### Using curl:
 ```bash
-curl -X POST https://your-api-endpoint/v1/video/caption \
-  -H "x-api-key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "video_url": "https://example.com/video.mp4",
-    "video_crf": 18,
-    "video_preset": "slow",
+# If using Docker
+docker build -t nca-toolkit:local .
+docker stop nca-toolkit && docker rm nca-toolkit
+docker run -d --name nca-toolkit --network docker_default --restart unless-stopped -p 8080:8080 --env-file .env nca-toolkit:local
+
+# Verify container is running
+docker ps | grep nca-toolkit
+```
+
+## Common Implementation Mistakes
+
+### 1. Parameters in Wrong Location
+❌ **Wrong**: Putting parameters inside `settings`
+```json
+{
     "settings": {
-        "font_size": 72,
-        "style": "highlight"
+        "video_crf": 18  // This will cause validation error
     }
-}'
-```
-
-### Using n8n:
-1. Add HTTP Request node
-2. Set Method: POST
-3. Set URL: `https://your-api-endpoint/v1/video/caption`
-4. Add Header: `x-api-key: YOUR_API_KEY`
-5. Set Body Content Type: JSON
-6. Use this expression if your data is nested:
-   ```
-   {{ $json.captionApiPayload }}
-   ```
-
-## Step 5: Verify Success
-
-### Successful Response:
-```json
-{
-    "code": 200,
-    "response": "https://storage.example.com/output-video.mp4",
-    "message": "success"
 }
 ```
 
-### Common Error (Wrong Structure):
+✅ **Correct**: Parameters at root level
 ```json
 {
-    "message": "Invalid payload: Additional properties are not allowed ('video_crf', 'video_preset' were unexpected)"
+    "video_crf": 18,
+    "settings": {
+        "font_size": 48
+    }
 }
 ```
-**Fix:** Ensure parameters are at root level, not inside settings or wrapped in another object.
 
-## Quality Parameter Guidelines
+### 2. Missing Function Parameters
+Ensure you update ALL occurrences:
+- Route handler parameter extraction
+- Service function call
+- Service function signature
+- FFmpeg rendering logic
 
-### CRF (Constant Rate Factor)
-- **0-17**: Near lossless, very large files
-- **18**: Visually lossless (recommended for high quality)
-- **19-23**: Very good quality, reasonable file size
-- **24-27**: Good quality, smaller files
-- **28-35**: Acceptable quality, much smaller files
-- **36-51**: Lower quality, smallest files
+### 3. Schema Validation Errors
+If you get "Additional properties are not allowed" errors:
+- Check that you added parameters to the schema
+- Ensure `additionalProperties: False` comes AFTER all property definitions
+- Verify parameter names match exactly
 
-### Preset Speed/Quality Trade-offs
-- **ultrafast**: Fastest encoding, largest file, lowest quality
-- **fast/faster**: Good for quick processing
-- **medium**: Balanced (default)
-- **slow/slower**: Better compression, longer processing
-- **veryslow**: Best compression, longest processing
+## Testing Different Quality Levels
 
-### When to Use Bitrate Instead of CRF
-- When you need predictable file sizes
-- For streaming platforms with bitrate requirements
-- When bandwidth is a primary concern
+Test your implementation with various quality settings:
 
-## Troubleshooting
+```bash
+# High quality
+curl -X POST ... -d '{"video_crf": 18, "video_preset": "slow", ...}'
 
-### "Additional properties are not allowed" Error
-- Check that quality parameters are at root level
-- Ensure no typos in parameter names
-- Verify you're not wrapping the payload
+# Balanced
+curl -X POST ... -d '{"video_crf": 23, "video_preset": "medium", ...}'
 
-### Quality Looks Poor
-- Lower the CRF value (try 18-20)
-- Use a slower preset
-- Consider using bitrate for consistency
+# Fast processing
+curl -X POST ... -d '{"video_crf": 28, "video_preset": "fast", ...}'
 
-### Processing Takes Too Long
-- Use a faster preset
-- Increase CRF slightly (23-25)
-- Consider processing in batches
+# Fixed bitrate
+curl -X POST ... -d '{"video_bitrate": "5M", "video_preset": "medium", ...}'
+```
 
-## Best Practices
+## Verification Checklist
 
-1. **Start with defaults** - Only add quality parameters when needed
-2. **Test with short clips** - Find optimal settings before processing long videos
-3. **Monitor file sizes** - Balance quality vs storage costs
-4. **Use webhooks** - Don't poll for results
-5. **Log your settings** - Track what works for different content types
+- [ ] Schema updated with new parameters
+- [ ] Route handler extracts all three parameters
+- [ ] Service function signature updated
+- [ ] Service function called with new parameters
+- [ ] FFmpeg rendering uses quality parameters
+- [ ] Default CRF (18) applied when not specified
+- [ ] All parameter combinations tested
+- [ ] Documentation updated
 
-## Example Integration Workflow
+## Default Behavior
 
-1. Receive video for captioning
-2. Determine quality requirements:
-   - Final production? → CRF 18, slow preset
-   - Quick review? → CRF 25, fast preset
-   - Size limit? → Use bitrate
-3. Build request with parameters at root level
-4. Send request with webhook URL
-5. Handle webhook response
-6. Deliver captioned video
+When quality parameters are not provided:
+- CRF: 18 (visually lossless)
+- Preset: Uses FFmpeg default (typically medium)
+- Bitrate: Not set (uses CRF mode)
 
-Remember: Quality parameters are optional. The endpoint will use sensible defaults (CRF 18, medium preset) if you don't specify them.
+## Performance Considerations
+
+- Slower presets increase processing time significantly
+- Lower CRF values increase file size exponentially
+- Bitrate mode provides predictable file sizes but may vary quality
+
+## Support
+
+If you encounter issues:
+1. Check Docker logs: `docker logs nca-toolkit`
+2. Verify parameter names match exactly
+3. Ensure parameters are at root level of request
+4. Test with minimal payload first
+
+This implementation gives your users full control over video quality while maintaining backward compatibility with existing requests.
