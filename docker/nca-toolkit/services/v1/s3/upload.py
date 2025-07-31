@@ -151,11 +151,9 @@ def stream_upload_to_s3(file_url, custom_filename=None, make_public=False, downl
         
         # Generate the URL to the uploaded file
         if make_public:
-            # Use public URL if available, otherwise fall back to endpoint URL
-            public_url = os.getenv('S3_PUBLIC_URL', endpoint_url)
             # URL encode the filename for the URL only
             encoded_filename = quote(filename)
-            file_url = f"{public_url}/{bucket_name}/{encoded_filename}"
+            file_url = f"{endpoint_url}/{bucket_name}/{encoded_filename}"
         else:
             # Generate a pre-signed URL for private files
             file_url = s3_client.generate_presigned_url(

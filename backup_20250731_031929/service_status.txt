@@ -1,0 +1,22 @@
+Everyday-OS Service Status Backup
+Date: 2025-07-31 03:19:51 UTC
+
+Current Running Services:
+- caddy: Up 2 weeks (healthy) - Reverse proxy
+- postgres: Up 2 weeks (healthy) - Database
+- minio: Up 2 weeks (healthy) - Object storage
+- n8n: Up 7 days (healthy) - Workflow automation
+- neo4j: Up 2 weeks (healthy) - Graph database
+- open-webui: Up 2 weeks (healthy) - AI chat interface
+- qdrant: Up 2 weeks - Vector database
+- redis: Up 2 weeks (healthy) - Cache/queue
+
+Services to be removed:
+- supabase: Not currently running (configuration exists)
+- searxng: Not currently running (configuration exists)
+- nca-toolkit: Not currently running (configuration exists)
+
+Notes:
+- No Supabase services are currently running
+- No SearXNG service is currently running
+- All core services are healthy

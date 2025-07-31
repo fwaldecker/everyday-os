@@ -41,7 +41,6 @@ This checklist ensures your Everyday-OS deployment is properly configured and re
 - [ ] Set strong `MINIO_ROOT_PASSWORD`
 - [ ] Set `NEO4J_AUTH` with format `neo4j/your-password`
 - [ ] Set `NEO4J_PASSWORD` to match the password in NEO4J_AUTH
-- [ ] Generate `SEARXNG_SECRET_KEY` using `openssl rand -hex 32`
 - [ ] Generate `WEBUI_SECRET_KEY` using `openssl rand -hex 32`
 - [ ] Generate `JWT_SECRET_KEY` using `openssl rand -hex 32`
 - [ ] Generate `SESSION_SECRET` using `openssl rand -hex 32`

@@ -31,247 +31,350 @@ Everyday-OS is a comprehensive, self-hosted platform that combines powerful AI t
 | [Open WebUI](https://openwebui.com/) | AI chat interface | `https://chat.yourdomain.com` |
 | [NCA Toolkit](https://github.com/coleam00/nca-toolkit) | Document processing | `https://nca.yourdomain.com` |
 | [MinIO](https://min.io/) | S3-compatible storage | `https://minio.yourdomain.com` |
-| [Neo4j](https://neo4j.com/) | Graph database | `https://neo4j.yourdomain.com` |
+| [Neo4j](https://neo4j.com/) | Graph database (optional) | `https://neo4j.yourdomain.com` |
 | [PostgreSQL](https://www.postgresql.org/) | Relational database | Internal only |
 | [Qdrant](https://qdrant.tech/) | Vector database | Internal only |
 | [Redis](https://redis.io/) | Cache/session store | Internal only |
 | [Caddy](https://caddyserver.com/) | Reverse proxy & SSL | Handles all HTTPS |
 
-## 🚀 Quick Start
+## 🎯 Pre-configured n8n Workflows
+
+Everyday-OS includes 18 pre-built n8n workflows that are automatically imported on first setup:
+
+- **AI Agent Workflows**: Local Agentic RAG AI Agent
+- **Integration Tools**: Create Google Doc, Summarize Slack Conversation, Post to Slack
+- **Database Tools**: Get Postgres Tables
+- **Various automation templates** for common use cases
+
+These workflows provide immediate value and serve as examples for building your own automations. When you first access n8n, you'll see all workflows ready to configure with your credentials.
+
+## 🚀 Complete Setup Guide
 
 ### Prerequisites
 
 - **Server Requirements**:
   - Ubuntu 20.04+ or compatible Linux distribution
   - 8GB RAM minimum (16GB recommended)
-  - 50GB+ free disk space
+  - 30GB minimum disk space (50GB+ recommended)
+    - Docker images: ~22GB (NCA Toolkit: 8.5GB, Open WebUI: 4.9GB, others: ~8GB)
+    - Data storage: Grows with usage (databases, uploads, logs)
+    - Tip: Use pre-built images to save ~10GB of build cache space
   - Docker 20.10+ and Docker Compose v2.0+
   - Python 3.8+
-  - Git
+  - A domain name with DNS access (for HTTPS setup)
 
-- **Domain Requirements**:
-  - A domain name with DNS control
-  - Ability to create A records
+### Step 1: Server Preparation
 
-### Installation
+1. **Update your system**:
+```bash
+sudo apt update && sudo apt upgrade -y
+```
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/fwaldecker/everyday-os.git
-   cd everyday-os
-   ```
+2. **Install Docker** (if not already installed):
+```bash
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 
-2. **Configure environment**:
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` and configure:
-   - `BASE_DOMAIN` - Your domain (e.g., `example.com`)
-   - `PROTOCOL` - Set to `https` for production
-   - `SERVER_IP` - Your server's public IP address
-   - `LETSENCRYPT_EMAIL` - Your email for SSL certificates
-   - All passwords and secrets (use `openssl rand -hex 32` to generate)
+# Add your user to docker group
+sudo usermod -aG docker $USER
 
-3. **Copy .env to docker directory**:
-   ```bash
-   cp .env docker/.env
-   ```
+# Log out and back in for group changes to take effect
+```
 
-4. **Set up DNS records** pointing to your server's IP:
-   - `n8n.yourdomain.com`
-   - `chat.yourdomain.com`
-   - `nca.yourdomain.com`
-   - `neo4j.yourdomain.com`
-   - `minio.yourdomain.com`
+3. **Install Docker Compose v2**:
+```bash
+# Docker Compose is included with Docker Desktop, but for servers:
+sudo apt install docker-compose-plugin
+```
 
-5. **Configure firewall**:
-   ```bash
-   sudo ufw allow 22/tcp
-   sudo ufw allow 80/tcp
-   sudo ufw allow 443/tcp
-   sudo ufw enable
-   ```
+4. **Verify installations**:
+```bash
+docker --version
+docker compose version
+```
 
-6. **Start services**:
-   ```bash
-   cd docker
-   docker compose up -d
-   ```
-
-7. **Verify deployment**:
-   ```bash
-   docker compose ps
-   ```
-   All services should show as "running" or "healthy".
-
-## 🔧 Configuration
-
-### Required Environment Variables
-
-Configure these in your `.env` file:
+### Step 2: Clone the Repository
 
 ```bash
-# Core Configuration
-BASE_DOMAIN=yourdomain.com
-PROTOCOL=https
-SERVER_IP=your.server.ip
-LETSENCRYPT_EMAIL=your-email@example.com
+git clone https://github.com/yourusername/everyday-os.git
+cd everyday-os
+```
 
-# n8n Configuration
+### Step 3: Configure Environment Variables
+
+1. **Copy the example environment file**:
+```bash
+cp .env.example .env
+```
+
+2. **Generate secure keys automatically**:
+```bash
+# This command will generate all required keys and show them
+cat << 'EOF'
 N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
 N8N_USER_MANAGEMENT_JWT_SECRET=$(openssl rand -hex 32)
-
-# Database Passwords
-POSTGRES_PASSWORD=your-secure-password  # No @ symbols!
-NEO4J_AUTH=neo4j/your-neo4j-password
-NEO4J_PASSWORD=your-neo4j-password
-
-# MinIO Configuration
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=your-minio-password
-
-# Security Keys
-SEARXNG_SECRET_KEY=$(openssl rand -hex 32)
+NEXTAUTH_SECRET=$(openssl rand -hex 32)
+ENCRYPTION_KEY=$(openssl rand -hex 32)
 WEBUI_SECRET_KEY=$(openssl rand -hex 32)
 JWT_SECRET_KEY=$(openssl rand -hex 32)
 SESSION_SECRET=$(openssl rand -hex 32)
+EOF
 
-# API Keys (Optional)
-OPENAI_API_KEY=your-openai-key
-ANTHROPIC_API_KEY=your-anthropic-key
+# Copy the output and save it for the next step
 ```
 
-### Service URLs Configuration
+3. **Edit the `.env` file** with your favorite editor:
+```bash
+nano .env  # or vim .env
+```
 
-Uncomment and configure these in `.env` for production:
+4. **Configure the required variables** (replace placeholder values):
 
 ```bash
+# Here's a template you can copy and modify:
+# 1. Replace yourdomain.com with your actual domain
+# 2. Replace your.server.ip with your server's IP
+# 3. Replace the generated keys from step 2
+# 4. Create secure passwords for services
+
+# === REQUIRED: Server Configuration ===
+PROTOCOL=https
+BASE_DOMAIN=yourdomain.com
+SERVER_IP=your.server.ip
+
+# === REQUIRED: n8n Credentials ===
+N8N_ENCRYPTION_KEY=paste-generated-key-here
+N8N_USER_MANAGEMENT_JWT_SECRET=paste-generated-key-here
+
+# === REQUIRED: Database Password ===
+POSTGRES_PASSWORD=create-a-strong-password-no-at-symbol
+
+# === REQUIRED: Neo4j Authentication ===
+NEO4J_AUTH=neo4j/create-a-strong-password
+NEO4J_PASSWORD=same-password-as-above
+
+# === REQUIRED: MinIO Object Storage ===
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minimum-8-characters
+
+# === REQUIRED: Security Keys ===
+NEXTAUTH_SECRET=paste-generated-key-here
+ENCRYPTION_KEY=paste-generated-key-here
+WEBUI_SECRET_KEY=paste-generated-key-here
+JWT_SECRET_KEY=paste-generated-key-here
+SESSION_SECRET=paste-generated-key-here
+
+# === REQUIRED: Service Hostnames (auto-configured) ===
 N8N_HOSTNAME=n8n.${BASE_DOMAIN}
 WEBUI_HOSTNAME=chat.${BASE_DOMAIN}
 NEO4J_HOSTNAME=neo4j.${BASE_DOMAIN}
 NCA_HOSTNAME=nca.${BASE_DOMAIN}
-MINIO_CONSOLE_HOSTNAME=minio.${BASE_DOMAIN}
+MINIO_CONSOLE_HOSTNAME=minio-console.${BASE_DOMAIN}
+MINIO_API_HOSTNAME=minio-api.${BASE_DOMAIN}
+LETSENCRYPT_EMAIL=admin@${BASE_DOMAIN}
+
+# === OPTIONAL: AI API Keys ===
+# Uncomment and add keys to enable AI features
+# OPENAI_API_KEY=your-openai-api-key-here
+# ANTHROPIC_API_KEY=your-anthropic-api-key-here
 ```
 
-## 📋 Post-Installation Setup
+**Pro tip**: Use `nano .env` or `vim .env` to edit. In nano, use Ctrl+O to save and Ctrl+X to exit.
 
-### 1. n8n Setup
-1. Visit `https://n8n.yourdomain.com`
-2. Create your admin account
-3. Configure workspace settings
-4. Set up credentials for external services
+### Step 4: Configure DNS
 
-### 2. Open WebUI Setup
-1. Visit `https://chat.yourdomain.com`
-2. Create your account
-3. Configure API keys:
-   - Settings → Connections → Add OpenAI/Anthropic API keys
+Before starting the services, configure your domain's DNS records:
 
-### 3. MinIO Setup
-1. Visit `https://minio.yourdomain.com`
-2. Login with credentials from `.env`
-3. Create buckets as needed for your workflows
+1. **Create A records** for each service pointing to your server's IP:
+   - `n8n.yourdomain.com` → Your Server IP
+   - `chat.yourdomain.com` → Your Server IP
+   - `neo4j.yourdomain.com` → Your Server IP
+   - `nca.yourdomain.com` → Your Server IP
+   - `minio-console.yourdomain.com` → Your Server IP
+   - `minio-api.yourdomain.com` → Your Server IP
 
-### 4. Neo4j Setup
-1. Visit `https://neo4j.yourdomain.com`
-2. Login with username `neo4j` and password from `.env`
-3. Browser will prompt to change password on first login
+2. **Wait for DNS propagation** (usually 5-30 minutes)
 
-### 5. NCA Toolkit
-- Access via API at `https://nca.yourdomain.com`
-- Default API key: `nca-toolkit-default-api-key`
-- Configure custom API key in `.env` as `NCA_API_KEY`
+### Step 5: Start the Services
 
-## 🔒 Security Best Practices
+1. **Navigate to the docker directory**:
+```bash
+cd docker
+```
 
-1. **Change all default passwords** immediately
-2. **Generate strong secrets** using `openssl rand -hex 32`
-3. **Enable 2FA** where available (especially n8n)
-4. **Use HTTPS only** - never disable SSL in production
-5. **Regular updates**: 
-   ```bash
-   cd everyday-os
-   git pull
-   cd docker
-   docker compose pull
-   docker compose up -d
-   ```
-6. **Monitor logs**:
-   ```bash
-   docker compose logs -f [service-name]
-   ```
+2. **Start all services**:
+```bash
+docker compose up -d
+```
 
-## 🛠️ Maintenance
+3. **Check service status**:
+```bash
+docker compose ps
+```
 
-### Service Management
+All services should show as "running" or "healthy".
+
+### Step 6: Run First-Time Setup
+
+Initialize storage and import workflows:
 
 ```bash
-# Check service status
-docker compose ps
-
-# View logs
-docker compose logs -f [service-name]
-
-# Restart a service
-docker compose restart [service-name]
-
-# Stop all services
-docker compose down
-
-# Stop and remove all data (WARNING!)
-docker compose down -v
+# From the everyday-os root directory
+./first-time-setup.sh
 ```
 
-### Backup
+This script will:
+- Create MinIO storage buckets for NCA Toolkit
+- Import 18 pre-configured n8n workflows
 
-Important data locations:
-- PostgreSQL: Automated backups in volumes
-- MinIO: `/var/lib/docker/volumes/docker_minio_data`
-- n8n workflows: Export via UI or API
-- Neo4j: `/var/lib/docker/volumes/docker_neo4j_data`
+Note: This only needs to be run once during initial setup.
 
-### Troubleshooting
+### Step 7: Initial Service Access
 
-**Services not starting:**
-- Check logs: `docker compose logs [service-name]`
-- Verify `.env` file exists in docker directory
-- Ensure all required variables are set
+1. **Wait for SSL certificates** (2-3 minutes after first start)
+   - Caddy automatically obtains Let's Encrypt certificates
 
-**SSL certificate issues:**
-- Verify DNS records point to correct IP
+2. **Access your services**:
+   - n8n: `https://n8n.yourdomain.com`
+   - Open WebUI: `https://chat.yourdomain.com`
+   - Neo4j Browser: `https://neo4j.yourdomain.com`
+   - MinIO Console: `https://minio-console.yourdomain.com`
+
+3. **First-time setup for each service**:
+   - **n8n**: Create your admin account on first visit
+   - **Open WebUI**: Create admin account (first user becomes admin)
+   - **Neo4j**: Login with username `neo4j` and your configured password
+   - **MinIO**: Login with `minioadmin` and your configured password
+
+## 🔧 Post-Installation Configuration
+
+### Configure n8n Workflows
+
+1. Log in to n8n at `https://n8n.yourdomain.com`
+2. You'll see 18 pre-imported workflows
+3. For each workflow you want to use:
+   - Click on the workflow to open it
+   - Add required credentials (API keys, database connections, etc.)
+   - Activate the workflow when ready
+
+### Set Up Open WebUI
+
+1. Access Open WebUI at `https://chat.yourdomain.com`
+2. Create your admin account (first user)
+3. Configure AI providers:
+   - Go to Settings → Connections
+   - Add your OpenAI/Anthropic API keys
+   - Test the connections
+
+### Configure Email (Optional but Recommended)
+
+To enable password reset and email notifications in n8n:
+
+1. Edit your `.env` file and uncomment the SMTP settings:
+```bash
+# Example for Gmail (requires app password)
+N8N_SMTP_HOST=smtp.gmail.com
+N8N_SMTP_PORT=587
+N8N_SMTP_USER=your-email@gmail.com
+N8N_SMTP_PASS=your-app-password  # NOT your regular password!
+N8N_SMTP_SENDER=your-email@gmail.com
+N8N_SMTP_SSL=false
+```
+
+2. For Gmail users:
+   - Enable 2-factor authentication
+   - Generate an app password: https://support.google.com/accounts/answer/185833
+   - Use the app password in N8N_SMTP_PASS
+
+3. Restart n8n to apply changes:
+```bash
+cd docker && docker compose restart n8n
+```
+
+## 🛠️ Common Operations
+
+### View logs
+```bash
+cd docker
+docker compose logs -f [service-name]
+```
+
+### Restart a service
+```bash
+cd docker
+docker compose restart [service-name]
+```
+
+### Stop all services
+```bash
+cd docker
+docker compose down
+```
+
+### Update services
+```bash
+cd docker
+docker compose pull
+docker compose up -d
+```
+
+### Backup data
+The data for all services is stored in Docker volumes. To backup:
+```bash
+# Backup all volumes
+docker run --rm -v everyday-os_n8n_storage:/data -v $(pwd):/backup alpine tar czf /backup/n8n_backup.tar.gz -C /data .
+```
+
+## 🔒 Security Considerations
+
+1. **Firewall Configuration**:
+   - Only open ports 80 and 443
+   - All other services communicate internally
+
+2. **Regular Updates**:
+   - Keep Docker and all images updated
+   - Monitor service security announcements
+
+3. **Backup Strategy**:
+   - Regular backups of all Docker volumes
+   - Test restore procedures
+
+4. **API Key Security**:
+   - Never commit `.env` file to git
+   - Rotate keys periodically
+   - Use strong, unique passwords
+
+## 🚨 Troubleshooting
+
+### Services won't start
+```bash
+# Check logs
+docker compose logs [service-name]
+
+# Verify environment variables
+docker compose config
+```
+
+### SSL certificate issues
+- Ensure DNS is properly configured
 - Check Caddy logs: `docker compose logs caddy`
-- Ensure ports 80/443 are open
+- Verify ports 80/443 are accessible
 
-**Connection issues:**
-- Verify firewall rules
-- Check service health: `docker compose ps`
-- Test internal connectivity
+### n8n workflow import issues
+- Run import manually: `cd docker && docker compose run --rm n8n-import`
+- Check if workflows already exist in n8n
 
-## 🌐 Optional: Google Cloud Integration
-
-For automated Google Cloud setup during client onboarding:
-
-1. Create a service account in Google Cloud
-2. Download the JSON key file
-3. Add to `.env`:
-   ```bash
-   GOOGLE_SERVICE_ACCOUNT_KEY='{"type":"service_account",...}'
-   GOOGLE_BILLING_ACCOUNT_ID=XXXXXX-XXXXXX-XXXXXX
-   ```
-
-This enables automated:
-- Project creation
-- API enablement (Gmail, Drive, Docs, etc.)
-- OAuth credential generation
-- Direct n8n integration
+### Database connection issues
+- Verify PostgreSQL is healthy: `docker compose ps postgres`
+- Check credentials in `.env` match service configs
 
 ## 📚 Additional Resources
 
 - [n8n Documentation](https://docs.n8n.io/)
-- [Open WebUI Documentation](https://docs.openwebui.com/)
+- [Open WebUI Docs](https://docs.openwebui.com/)
 - [Neo4j Documentation](https://neo4j.com/docs/)
-- [MinIO Documentation](https://min.io/docs/)
+- [MinIO Documentation](https://docs.min.io/)
 - [Caddy Documentation](https://caddyserver.com/docs/)
 
 ## 🤝 Contributing
@@ -284,12 +387,10 @@ Contributions are welcome! Please:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[Your License Here]
 
 ## 🙏 Acknowledgments
 
-- [n8n](https://n8n.io/) for the workflow automation platform
-- [Open WebUI](https://openwebui.com/) for the AI chat interface
-- [MinIO](https://min.io/) for S3-compatible storage
-- [Neo4j](https://neo4j.com/) for graph database capabilities
-- All other open-source projects that make this possible
+- The n8n team for the amazing automation platform
+- Open WebUI for the excellent AI interface
+- All the open-source projects that make this possible

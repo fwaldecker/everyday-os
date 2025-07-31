@@ -104,7 +104,7 @@ def generate_style_line(options):
     }
     return f"Style: {','.join(str(v) for v in style_options.values())}"
 
-def process_captioning(file_url, caption_srt, caption_type, options, job_id, video_crf=18, video_preset='medium', video_bitrate=None):
+def process_captioning(file_url, caption_srt, caption_type, options, job_id):
     """Process video captioning using FFmpeg."""
     try:
         logger.info(f"Job {job_id}: Starting download of file from {file_url}")
@@ -203,28 +203,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         try:
             # Log the FFmpeg command for debugging
             logger.info(f"Job {job_id}: Running FFmpeg with filter: {subtitle_filter}")
-            
-            # Build output options with quality settings
-            output_options = {
-                'vf': subtitle_filter,
-                'acodec': 'copy',
-                'vcodec': 'libx264',
-                'crf': str(video_crf),
-                'preset': video_preset
-            }
-            
-            # Add bitrate if specified
-            if video_bitrate:
-                output_options['b:v'] = video_bitrate
-                # Remove CRF when using bitrate (they're mutually exclusive)
-                del output_options['crf']
-            
-            logger.info(f"Job {job_id}: Using video quality settings - CRF: {video_crf}, Preset: {video_preset}, Bitrate: {video_bitrate}")
 
             # Run FFmpeg to add subtitles to the video
             ffmpeg.input(video_path).output(
                 output_path,
-                **output_options
+                vf=subtitle_filter,
+                acodec='copy'
             ).run()
             logger.info(f"Job {job_id}: FFmpeg processing completed, output file at {output_path}")
         except ffmpeg.Error as e:

@@ -1,9 +1,16 @@
+# Supabase include commented out - path doesn't exist
+# include:
+#   - ./supabase/docker/docker-compose.yml
+
 volumes:
   n8n_storage:
   qdrant_storage:
   open-webui:
   caddy-data:
   caddy-config:
+  searxng_data:
+  searxng_secret:
+  searxng_logs:
   valkey-data:
   postgres_data:
   minio_data:
@@ -36,13 +43,6 @@ x-n8n: &service-n8n
     - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
     - TMPDIR=/data/tmp
     - N8N_RUNNERS_ENABLED=true
-    # SMTP Configuration (optional)
-    - N8N_SMTP_HOST=${N8N_SMTP_HOST:-}
-    - N8N_SMTP_PORT=${N8N_SMTP_PORT:-}
-    - N8N_SMTP_USER=${N8N_SMTP_USER:-}
-    - N8N_SMTP_PASS=${N8N_SMTP_PASS:-}
-    - N8N_SMTP_SENDER=${N8N_SMTP_SENDER:-}
-    - N8N_SMTP_SSL=${N8N_SMTP_SSL:-false}
   healthcheck:
     test: ["CMD", "wget", "-q", "-O-", "http://localhost:5678/healthz"]
     interval: 30s
@@ -54,6 +54,8 @@ x-n8n: &service-n8n
     options:
       max-size: "10m"
       max-file: "3"
+
+
 
 services:
 
@@ -127,28 +129,15 @@ services:
         max-file: "3"
         tag: "open-webui"
 
-  n8n-import:
-    <<: *service-n8n
-    container_name: n8n-import
-    profiles: ["import"]
-    entrypoint: /bin/sh
-    command:
-      - "-c"
-      - |
-        if [ ! -f /home/node/.n8n/.workflows-imported ]; then
-          echo "Importing workflows for first-time setup..."
-          n8n import:workflow --separate --input=/workflows
-          touch /home/node/.n8n/.workflows-imported
-          echo "Workflow import completed successfully!"
-        else
-          echo "Workflows already imported, skipping..."
-        fi
-    volumes:
-      - n8n_storage:/home/node/.n8n
-      - ../n8n-workflows:/workflows:ro
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # n8n-import:
+  #   <<: *service-n8n
+  #   container_name: n8n-import
+  #   entrypoint: /bin/sh
+  #   command:
+  #     - "-c"
+  #     - "n8n import:credentials --separate --input=/backup/credentials.json && n8n import:workflow --separate --input=/backup/workflows"
+  #   volumes:
+  #     - ./n8n/backup:/backup
 
   n8n:
     <<: *service-n8n
@@ -166,6 +155,7 @@ services:
           memory: 1G
     volumes:
       - n8n_storage:/home/node/.n8n
+      - ./n8n/backup:/backup
       - ./shared:/data/shared
       - type: tmpfs
         target: /tmp
@@ -331,21 +321,6 @@ services:
         max-file: "3"
         tag: "minio"
 
-  minio-init:
-    image: minio/mc:latest
-    container_name: minio-init
-    profiles: ["init"]
-    depends_on:
-      minio:
-        condition: service_healthy
-    volumes:
-      - ./minio-init.sh:/init.sh:ro
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-    entrypoint: /bin/bash
-    command: /init.sh
-
   nca-toolkit:
     build:
       context: ./nca-toolkit
@@ -460,4 +435,86 @@ services:
       timeout: 10s
       retries: 10
 
+  searxng:
+    container_name: searxng
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    hostname: searxng
+    
+    # Network configuration
+    expose:
+      - 8080/tcp
+    
+    # Volumes for persistent data and configuration
+    # Commenting out volume to fix permission issues - using ephemeral storage
+    # volumes:
+    #   - searxng_data:/etc/searxng:rw
+    
+    # Use tmpfs for temporary files
+    tmpfs:
+      - /tmp
+    
+    # Environment variables
+    environment:
+      - INSTANCE_NAME=SearXNG
+      - BASE_URL=${PROTOCOL}://search.${BASE_DOMAIN}/
+      - AUTOCOMPLETE=google
+      - LANGUAGE=en-US
+      - DEFAULT_LOCALE=en
+      - ULTRA_SECRET_KEY=${SEARXNG_SECRET_KEY:-generate-a-secret-key-and-put-it-here}
+      - SEARCH_USE_GOOGLE_IMAGES=1
+      - SEARCH_USE_GOOGLE_MAPS=1
+      - SEARCH_USE_GOOGLE_TRANSLATE=1
+      - SAFESEARCH=0
+      - SEARCH_ENGINE_BAN=duckduckgo,bing
+      - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
+      - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
+      - UWSGI_PROCESSES=${SEARXNG_UWSGI_PROCESSES:-1}
+      - UWSGI_RELOAD_ON_RSS=2048
+      - UWSGI_CHEAPER=1
+      - UWSGI_CHEAPER_ALGO=busyness
+      - UWSGI_CHEAPER_OVERLOAD=10
+      - UWSGI_CHEAPER_STEP=1
+      - UWSGI_CHEAPER_BUSINESS_VERBOSE=true
+      - UWSGI_CHEAPER_BUSINESS_MULTIPLIER=30
+      - UWSGI_CHEAPER_BUSINESS_MIN=5
+      - UWSGI_CHEAPER_BUSINESS_MAX=20
+      - UWSGI_CHEAPER_BUSINESS_BACKLOG_ALERT=10
+      - UWSGI_CHEAPER_BUSINESS_BACKLOG_STEP=1
+    
+    # Security
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    read_only: false
+    security_opt:
+      - no-new-privileges:true
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          memory: 1G
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "searxng"
 
