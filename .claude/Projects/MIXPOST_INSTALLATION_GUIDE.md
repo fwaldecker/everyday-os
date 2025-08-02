@@ -7,6 +7,11 @@
 - 15-minute Pomodoros: 10
 - Estimated completion: 2-3 days
 
+### Installation Details
+- **License Key**: `yoeya4oEyrmiEEDKZGr2RtMTJVQJhBkpaPuT8EXAL1NOsZVUEFrUMzSxt5Vy7i1J`
+- **Domain**: `social.everydaycreator.org`
+- **DNS Provider**: Cloudflare
+
 ---
 
 ## Phase 1: Pre-Installation & Infrastructure
@@ -29,7 +34,7 @@
 
 #### 🍅 Task 2: Planning & Backup (25 min)
 **What I need from you:**
-- Confirmation of subdomain choice (social.yourdomain.com)
+- Confirmation of subdomain choice (social.everydaycreator.org)
 - Approval to create backups
 
 **What I'll do for you:**
@@ -40,11 +45,11 @@
 
 #### 🍅 Task 3: DNS Preparation (15 min)
 **What I need from you:**
-- Access to DNS management panel
-- Confirmation of subdomain
+- Access to Cloudflare DNS management panel
+- Confirmation of subdomain (social.everydaycreator.org)
 
 **What I'll do for you:**
-- Provide exact DNS record to add
+- Provide exact DNS A record to add in Cloudflare
 - Test current DNS setup
 - Prepare for SSL certificate
 
