@@ -12,6 +12,8 @@ volumes:
   neo4j_import:
   neo4j_plugins:
   nca_data:
+  mixpost_storage:
+  mysql_data:
 
 x-n8n: &service-n8n
   image: n8nio/n8n:latest
@@ -459,5 +461,69 @@ services:
       interval: 3s
       timeout: 10s
       retries: 10
+
+  mysql:
+    image: mysql/mysql-server:8.0
+    container_name: mixpost-mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-MixPostMySQL2025!}
+      - MYSQL_DATABASE=mixpost
+      - MYSQL_USER=mixpost
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-MixPostDB2025!}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    expose:
+      - 3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mixpost:
+    image: inovector/mixpost-pro-team:latest
+    container_name: mixpost
+    restart: unless-stopped
+    ports:
+      - "9000:80"
+    environment:
+      # License
+      - LICENSE_KEY=yoeya4oEyrmiEEDKZGr2RtMTJVQJhBkpaPuT8EXAL1NOsZVUEFrUMzSxt5Vy7i1J
+      
+      # Application
+      - APP_NAME=Mixpost
+      - APP_KEY=base64:mSkK0ldNzh0XYDc0QiCkEGDcvbTTVbIfY3m3UssGvAU=
+      - APP_URL=https://social.everydaycreator.org
+      - APP_DOMAIN=social.everydaycreator.org
+      - SESSION_DOMAIN=.everydaycreator.org
+      - SSL_EMAIL=${LETSENCRYPT_EMAIL:-admin@everydaycreator.org}
+      
+      # Database
+      - DB_DATABASE=mixpost
+      - DB_USERNAME=mixpost
+      - DB_PASSWORD=${MYSQL_PASSWORD:-MixPostDB2025!}
+      
+      # Mail (optional, using n8n settings if available)
+      - MAIL_MAILER=${N8N_SMTP_HOST:+smtp}
+      - MAIL_HOST=${N8N_SMTP_HOST:-localhost}
+      - MAIL_PORT=${N8N_SMTP_PORT:-587}
+      - MAIL_USERNAME=${N8N_SMTP_USER:-}
+      - MAIL_PASSWORD=${N8N_SMTP_PASS:-}
+      - MAIL_ENCRYPTION=${N8N_SMTP_SSL:-tls}
+      - MAIL_FROM_ADDRESS=${N8N_SMTP_SENDER:-noreply@everydaycreator.org}
+      - MAIL_FROM_NAME=Mixpost
+      
+      # Pages configuration
+      - MIXPOST_PUBLIC_PAGES_PREFIX=
+      
+    volumes:
+      - mixpost_storage:/var/www/html/storage/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 

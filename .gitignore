@@ -30,3 +30,5 @@ searxng/uwsgi*
 .Trashes
 ehthumbs.db
 Thumbs.db
+# Backup files
+backup-*.tar.gz
