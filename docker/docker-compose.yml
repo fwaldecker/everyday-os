@@ -78,7 +78,6 @@ services:
       - HOST=0.0.0.0
       - OPENAI_API_BASE_URL=${OPENAI_API_BASE_URL:-https://api.openai.com/v1}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       # - OLLAMA_API_BASE_URL=${OLLAMA_API_BASE_URL:-http://ollama:11434}  # Commented out - no local Ollama service
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-your-secret-key-change-me}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-jwt-secret-change-me}
@@ -365,7 +364,6 @@ services:
       # API Keys
       - API_KEY=${NCA_API_KEY:-nca-toolkit-default-api-key}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       
       # S3 Storage Configuration (Official NCA Toolkit format)
       - S3_ENDPOINT_URL=http://minio:9000
@@ -501,9 +499,14 @@ services:
       - SSL_EMAIL=${LETSENCRYPT_EMAIL:-admin@everydaycreator.org}
       
       # Database
+      - DB_HOST=mysql
       - DB_DATABASE=mixpost
       - DB_USERNAME=mixpost
       - DB_PASSWORD=${MYSQL_PASSWORD:-MixPostDB2025!}
+      
+      # Redis (use existing redis service)
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       
       # Mail (optional, using n8n settings if available)
       - MAIL_MAILER=${N8N_SMTP_HOST:+smtp}
@@ -520,10 +523,23 @@ services:
       
     volumes:
       - mixpost_storage:/var/www/html/storage/app
+      - /root/everyday-os/packages:/var/www/html/packages  # Mount custom package
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Custom entrypoint to link our forked package
+    entrypoint: >
+      sh -c "
+        if [ -d /var/www/html/packages/mixpost-custom ]; then
+          echo 'Setting up custom Mixpost package...';
+          rm -rf /var/www/html/vendor/inovector/mixpost-pro-team;
+          cp -r /var/www/html/packages/mixpost-custom /var/www/html/vendor/inovector/mixpost-pro-team;
+          chown -R www-data:www-data /var/www/html/vendor/inovector/mixpost-pro-team;
+        fi;
+        exec start.sh
+      "
+
 
 
