@@ -24,7 +24,7 @@ class PostCommentsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'text' => ['required', 'string', 'min:1'],
-            'user_id' => ['nullable', 'integer', 'exists:' . self::getUserClass()::getTableName() . ',id'],
+            'user_id' => ['nullable', 'integer', 'exists:' . (new (self::getUserClass()))->getTable() . ',id'],
             'parent_id' => ['nullable', 'string'],
         ]);
 
@@ -49,7 +49,7 @@ class PostCommentsController extends Controller
 
         // Handle parent comment if replying
         $parentActivity = null;
-        if ($request->input('parent_id')) {
+        if ($request->has('parent_id')) {
             $parentActivity = $post->activities()
                 ->where('uuid', $request->input('parent_id'))
                 ->first();

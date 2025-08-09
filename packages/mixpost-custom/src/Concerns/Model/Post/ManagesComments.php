@@ -29,8 +29,21 @@ trait ManagesComments
 
         PostActivityCreated::broadcast($activity)->toOthers();
         
-        // Dispatch webhook event for new comment
-        PostCommentCreated::dispatch($activity);
+        // Get the user ID who created the comment
+        $userId = $user instanceof User ? $user->id : $user;
+        
+        // Only dispatch webhook for non-Eve users (Eve is user_id 2)
+        // This prevents infinite loops when Eve posts comments via API
+        if ($userId != 2) {
+            // Ensure workspace is loaded before dispatching webhook event
+            // Check if workspace is already loaded, if not load it
+            if (!\Inovector\Mixpost\Facades\WorkspaceManager::current() && $this->workspace_id) {
+                \Inovector\Mixpost\Facades\WorkspaceManager::loadById($this->workspace_id);
+            }
+            
+            // Dispatch webhook event for new comment
+            PostCommentCreated::dispatch($activity);
+        }
 
         if ($parentModel) {
             PostCommentUpdated::broadcast($parentModel)->toOthers();

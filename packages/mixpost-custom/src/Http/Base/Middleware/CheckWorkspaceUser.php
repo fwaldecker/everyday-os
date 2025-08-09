@@ -14,8 +14,20 @@ class CheckWorkspaceUser
     {
         $roles = !$role ? [] : array_map(fn($roleItem) => WorkspaceUserRole::fromName($roleItem), explode('|', $role));
 
-        if (Auth::user()
-            ->hasWorkspace(
+        $user = Auth::user();
+        
+        // If no user is authenticated (shouldn't happen after auth middleware, but safety check)
+        if (!$user) {
+            if (!$request->expectsJson()) {
+                abort(403);
+            }
+
+            return response()->json([
+                'message' => 'Access forbidden.',
+            ], 403);
+        }
+
+        if ($user->hasWorkspace(
                 WorkspaceManager::current(),
                 empty($roles) ? null : $roles
             )

@@ -74,6 +74,7 @@ This guide walks you through setting up the AI-powered comment system in Mixpost
   "post_id": 123,
   "post_uuid": "post-uuid-here",
   "workspace_id": 1,
+  "workspace_uuid": "dd7477ef-bcd2-45dd-8f2e-14e790fdd2e2",
   "text": "User's comment text",
   "parent_id": null
 }
@@ -93,8 +94,13 @@ This guide walks you through setting up the AI-powered comment system in Mixpost
 
 **URL:** 
 ```
-https://social.everydaycreator.org/api/mixpost/{{ $json.workspace_id }}/posts/{{ $json.post_uuid }}/comments
+https://social.everydaycreator.org/mixpost/api/{{ $('Webhook').item.json.body.data.workspace_uuid }}/posts/{{ $('Webhook').item.json.body.data.post_uuid }}/comments
 ```
+
+⚠️ **IMPORTANT:** 
+- The URL structure is `/mixpost/api/` NOT `/api/mixpost/`
+- The API requires the workspace UUID (not the numeric ID)
+- The webhook node must be named "Webhook" for these variables to work
 
 **Authentication:** 
 - Type: Header Auth
@@ -114,7 +120,7 @@ https://social.everydaycreator.org/api/mixpost/{{ $json.workspace_id }}/posts/{{
 {
   "text": "{{ $json.ai_response }}",
   "user_id": 2,
-  "parent_id": "{{ $json.comment.id }}"
+  "parent_id": "{{ $('Webhook').item.json.body.data.comment.id }}"
 }
 ```
 
@@ -196,7 +202,7 @@ You could create additional AI users:
 **Request:**
 ```bash
 curl -X POST \
-  https://social.everydaycreator.org/api/mixpost/1/posts/abc-123/comments \
+  https://social.everydaycreator.org/mixpost/api/1/posts/abc-123/comments \
   -H 'Authorization: Bearer YOUR_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{

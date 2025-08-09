@@ -33,11 +33,19 @@ class PostCommentCreated implements WebhookEvent
     {
         $this->activity->load('user', 'post', 'post.accounts', 'post.versions', 'post.tags');
         
+        // Get workspace UUID
+        $workspaceUuid = null;
+        if ($this->activity->post?->workspace_id) {
+            $workspace = \Inovector\Mixpost\Models\Workspace::find($this->activity->post->workspace_id);
+            $workspaceUuid = $workspace?->uuid;
+        }
+        
         return [
             'comment' => (new PostActivityResource($this->activity))->resolve(),
             'post_id' => $this->activity->post_id,
             'post_uuid' => $this->activity->post?->uuid,
             'workspace_id' => $this->activity->post?->workspace_id,
+            'workspace_uuid' => $workspaceUuid,
             'user' => [
                 'id' => $this->activity->user?->id,
                 'name' => $this->activity->user?->name,

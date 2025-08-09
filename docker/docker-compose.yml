@@ -13,6 +13,7 @@ volumes:
   neo4j_plugins:
   nca_data:
   mixpost_storage:
+  mixpost_vendor:
   mysql_data:
 
 x-n8n: &service-n8n
@@ -529,15 +530,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # Custom entrypoint to link our forked package
+    # Use original start script
     entrypoint: >
       sh -c "
-        if [ -d /var/www/html/packages/mixpost-custom ]; then
-          echo 'Setting up custom Mixpost package...';
-          rm -rf /var/www/html/vendor/inovector/mixpost-pro-team;
-          cp -r /var/www/html/packages/mixpost-custom /var/www/html/vendor/inovector/mixpost-pro-team;
-          chown -R www-data:www-data /var/www/html/vendor/inovector/mixpost-pro-team;
-        fi;
         exec start.sh
       "
 
