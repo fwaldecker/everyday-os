@@ -3,9 +3,9 @@ version: '3.8'
 # Docker volumes for persistent data
 volumes:
   n8n_storage:
-    name: everydayos_n8n_storage
+    name: docker_n8n_storage  # CRITICAL: NEVER CHANGE THIS NAME - Contains all n8n data
   postgres_data:
-    name: everydayos_postgres_data
+    name: docker_postgres_data  # CRITICAL: NEVER CHANGE THIS NAME - Contains all user accounts & workflows
   minio_data:
     name: everydayos_minio_data
   caddy_data:
@@ -25,7 +25,7 @@ networks:
 services:
   # PostgreSQL Database for n8n
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine  # CRITICAL: Must be v17 - existing data is from v17
     container_name: everydayos_postgres
     restart: unless-stopped
     healthcheck:
@@ -177,9 +177,9 @@ services:
     environment:
       - BASE_DOMAIN=${BASE_DOMAIN}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    # IMPORTANT: Only depend on essential services, NOT optional ones
     depends_on:
       - n8n
       - minio
-      - nca-toolkit
     networks:
       - everydayos

@@ -40,16 +40,9 @@ n8n.{$BASE_DOMAIN} {
         # IMPORTANT: 5GB buffer settings for large file handling
         transport http {
             read_timeout 2h
-            read_header_timeout 2h
             write_timeout 2h
-            idle_timeout 2h
             dial_timeout 2h
             response_header_timeout 2h
-            max_conns_per_host 0
-            max_response_header_size 5GB
-            buffer_client_body 5GB
-            buffer_requests
-            buffer_response
         }
     }
 }
