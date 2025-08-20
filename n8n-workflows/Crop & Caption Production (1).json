@@ -1,0 +1,1307 @@
+{
+  "name": "Crop & Caption (production)",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://nca.everydaycreator.org/v1/video/caption",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Style Validator').item.json) }}",
+        "options": {}
+      },
+      "id": "bdddbb78-3848-42f5-b5c1-efb5f2120f19",
+      "name": "Add Captions API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3312,
+        3856
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JMY53dTaSMmX8vtJ",
+          "name": "NCA Toolkit"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// DEBUG VERSION - Style Validator with extra logging to identify the issue\n// This will help us see exactly what's being sent\n\nconst items = $input.all();\n\n// Get required data from previous nodes\nconst webhookData = $('Webhook').item.json;\nconst airtableRec = $('Get a record').item.json;\nconst captionPlacementData = $('Caption Placement').item.json;\n\nconsole.log('=== STYLE VALIDATOR DEBUG START ===');\nconsole.log('Node executing at:', new Date().toISOString());\n\n// Parse the AI's caption placement analysis\nlet placementData = {\n  visual_analysis: {\n    faces_location: \"unknown\",\n    screenshare_location: \"none\",\n    empty_spaces: []\n  },\n  caption_placement: {\n    x: 540,\n    y: 1500,\n    font_size: 72,\n    reasoning: \"Using default values due to parsing error\"\n  },\n  style_colors: {\n    text_color: \"#FFFFFF\",\n    stroke_color: \"#000000\",\n    highlight_color: \"#FFD700\",\n    reasoning: \"Default high-contrast colors\"\n  }\n};\n\ntry {\n  let content = captionPlacementData.content || captionPlacementData.choices?.[0]?.message?.content || '';\n  content = content.replace(/^```json\\s*\\n?/i, '').replace(/\\n?```\\s*$/i, '').trim();\n  \n  const aiAnalysis = JSON.parse(content);\n  \n  if (aiAnalysis.visual_analysis && aiAnalysis.caption_placement && aiAnalysis.style_colors) {\n    placementData = aiAnalysis;\n    console.log('Successfully parsed AI caption placement analysis');\n  }\n} catch (error) {\n  console.error('Failed to parse AI analysis, using defaults:', error);\n}\n\n// Get video URL - handle various field types\nlet videoUrl = '';\n\n// Try different possible video URL fields\nconst possibleVideoFields = [\n  'miniO storage URL',\n  'Cropped Clip',\n  'Final Clip (watch me)',\n  'Clip URL'  // Added this as another possibility\n];\n\nfor (const fieldName of possibleVideoFields) {\n  if (airtableRec[fieldName]) {\n    if (Array.isArray(airtableRec[fieldName]) && airtableRec[fieldName].length > 0) {\n      videoUrl = airtableRec[fieldName][0].url;\n      console.log(`Found video URL in field: ${fieldName} (array)`);\n      break;\n    } else if (typeof airtableRec[fieldName] === 'string') {\n      videoUrl = airtableRec[fieldName];\n      console.log(`Found video URL in field: ${fieldName} (string)`);\n      break;\n    }\n  }\n}\n\n// If still no URL, check for Google Drive ID\nif (!videoUrl && airtableRec['active-speaker video gdrive id (from Parent AV)']) {\n  const gdriveId = airtableRec['active-speaker video gdrive id (from Parent AV)'];\n  videoUrl = `https://drive.google.com/file/d/${gdriveId}/view`;\n  console.log('Constructed Google Drive URL from ID');\n}\n\nif (!videoUrl) {\n  console.error('Available Airtable fields:', Object.keys(airtableRec));\n  throw new Error('No valid video URL found in Airtable record');\n}\n\n// Get callback URL\nconst callbackUrl = webhookData.body.action.CALLBACK_WEBHOOK_URL;\n\n// Build the caption payload - ABSOLUTELY NO video_crf or video_preset!\nconst captionApiPayload = {\n  video_url: videoUrl,\n  settings: {\n    x: placementData.caption_placement.x,\n    y: placementData.caption_placement.y,\n    alignment: \"center\",\n    font_family: \"The Bold Font\",\n    font_size: placementData.caption_placement.font_size,\n    bold: false,\n    italic: false,\n    line_color: placementData.style_colors.text_color,\n    word_color: placementData.style_colors.highlight_color,\n    outline_color: placementData.style_colors.stroke_color,\n    style: \"highlight\",\n    outline_width: 3,\n    shadow_offset: 2,\n    max_words_per_line: 4,\n    all_caps: false\n  },\n  id: airtableRec.id,\n  webhook_url: callbackUrl\n};\n\n// CRITICAL DEBUG: Log exactly what we're sending\nconsole.log('=== PAYLOAD BEING SENT ===');\nconsole.log(JSON.stringify(captionApiPayload, null, 2));\n\n// Check for any accidental properties\nconst payloadKeys = Object.keys(captionApiPayload);\nconsole.log('Root level keys in payload:', payloadKeys);\n\nif (payloadKeys.includes('video_crf') || payloadKeys.includes('video_preset')) {\n  console.error('ERROR: Found forbidden keys in payload!');\n  console.error('This should not happen - check the code above');\n}\n\nconsole.log('=== STYLE VALIDATOR DEBUG END ===');\n\n// Return ONLY the captionApiPayload\nreturn [{\n  json: captionApiPayload\n}];"
+      },
+      "id": "1d115c57-f4ea-4cd2-938e-aad5d8e48bc2",
+      "name": "Style Validator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3088,
+        3856
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://nca.everydaycreator.org/v1/ffmpeg/compose",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"id\": \"{{ $json.id }}\",\n  \"inputs\": [\n    {\n      \"file_url\": \"{{ $json.fields['Clip URL'] }}\"\n    }\n  ],\n  \"filters\": [\n    {\n      \"filter\": \"[0:v]crop={{ $json.fields['Crop x-Width'] }}:{{ $json.fields['Crop y-Height'] }}:{{ $json.fields['Clip Left x-Width'] }}:{{ $json.fields['Clip Top y-Height'] }},scale={{ $json.fields['Clip x-Width (from Videos)'][0] }}:{{ $json.fields['Clip y-Height (from Videos)'][0] }}:flags=lanczos,unsharp=5:5:0.8:5:5:0.0[v]\"\n    }\n  ],\n  \"outputs\": [\n    {\n      \"options\": [\n        { \"option\": \"-map\", \"argument\": \"[v]\" },\n        { \"option\": \"-map\", \"argument\": \"0:a\" },\n        { \"option\": \"-c:v\", \"argument\": \"libx264\" },\n        { \"option\": \"-c:a\", \"argument\": \"copy\" },\n        { \"option\": \"-preset\", \"argument\": \"slower\" },\n        { \"option\": \"-crf\", \"argument\": \"16\" },\n        { \"option\": \"-profile:v\", \"argument\": \"high\" },\n        { \"option\": \"-level\", \"argument\": \"4.2\" },\n        { \"option\": \"-pix_fmt\", \"argument\": \"yuv420p\" },\n        { \"option\": \"-movflags\", \"argument\": \"+faststart\" },\n        { \"option\": \"-tune\", \"argument\": \"film\" }\n      ]\n    }\n  ],\n  \"metadata\": {\n    \"thumbnail\": true,\n    \"filesize\": true,\n    \"duration\": true,\n    \"bitrate\": true,\n    \"encoder\": true\n  },\n  \"webhook_url\": \"{{ $('Webhook').item.json.body.action.CALLBACK_WEBHOOK_URL }}\"\n}",
+        "options": {}
+      },
+      "id": "ae17ae69-8491-4a30-a33d-74b3cf15fc60",
+      "name": "Crop API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3760,
+        3456
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JMY53dTaSMmX8vtJ",
+          "name": "NCA Toolkit"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "text": "=IMPORTANT: You are analyzing a thumbnail of a video that is exactly {{ $('Get a record').item.json['Video x-Width (from Videos)'][0] }} x {{ $('Get a record').item.json['Video y-Height (from Videos)'][0] }} pixels. \n\nTARGET OUTPUT DIMENSIONS: {{ $('Get a record').item.json['Clip x-Width (from Videos)'][0] }} x {{ $('Get a record').item.json['Clip y-Height (from Videos)'][0] }} pixels\n\nTASK 1 - CROP ANALYSIS:\nAnalyze the image and determine if this shows:\n1. A person's face as the main subject (talking head video)\n2. A computer screen/browser/application being shared (screenshare video)\n\nFOR TALKING HEAD VIDEOS - CRITICAL CENTERING RULES:\n- For FRONT-FACING subjects: x,y should be the center of the face (between the eyes)\n- For SIDE PROFILE subjects: x,y should be the center of the HEAD, not the face\n  - For profiles facing left: center should be closer to the visible ear or back of head\n  - For profiles facing right: center should be adjusted rightward from the nose\n  - Think of drawing a vertical line through the middle of the entire head (including the back)\n- The goal is to center the entire head in the crop, not just the visible facial features\n\nTASK 2 - COLOR ANALYSIS:\nAnalyze this frame and recommend the best text colors for video captions based on:\n1. Background colors and contrast\n2. Optimal readability\n3. Professional appearance\n4. Brand consistency using the approved color palette\n\n**IMPORTANT: You can ONLY use colors from this approved design kit color palette:**\n{{ $('Get a document').item.json.content }}\n\nAnalyze the video frame and select the most appropriate colors from the palette above. Do not suggest any colors that are not in the provided palette.\n\nYOU MUST RESPOND WITH ONLY A JSON OBJECT IN THIS EXACT FORMAT - NO OTHER TEXT:\n\nFor TALKING HEAD videos:\n{\n  \"crop_analysis\": {\n    \"type\": \"talking_head\", \n    \"x\": [face_center_x], \n    \"y\": [face_center_y], \n    \"width\": [crop_width], \n    \"height\": [crop_height]\n  },\n  \"color_analysis\": {\n    \"background_analysis\": \"Description of the dominant background colors and patterns\",\n    \"text_color\": \"Recommended main text color (hex code) - MUST be from the palette\",\n    \"stroke_color\": \"Recommended text outline/stroke color (hex code) - MUST be from the palette\", \n    \"highlight_color\": \"Recommended highlight color for emphasized words (hex code) - MUST be from the palette\",\n    \"reasoning\": \"Brief explanation of why these specific palette colors work best for this frame\"\n  }\n}\n\nFor SCREENSHARE videos:\n{\n  \"crop_analysis\": {\n    \"type\": \"screenshare\", \n    \"x\": [content_left_x], \n    \"y\": [content_top_y], \n    \"width\": [content_width], \n    \"height\": [content_height]\n  },\n  \"color_analysis\": {\n    \"background_analysis\": \"Description of the dominant background colors and patterns\",\n    \"text_color\": \"Recommended main text color (hex code) - MUST be from the palette\",\n    \"stroke_color\": \"Recommended text outline/stroke color (hex code) - MUST be from the palette\", \n    \"highlight_color\": \"Recommended highlight color for emphasized words (hex code) - MUST be from the palette\",\n    \"reasoning\": \"Brief explanation of why these specific palette colors work best for this frame\"\n  }\n}\n\nCRITICAL RULES:\n- Output ONLY the JSON object, no markdown, no explanation\n- All coordinates must be integers\n- For talking heads: \n  - x,y are the CENTER coordinates of the HEAD (not just face) in the original video\n  - width,height define the crop box size around the head\n  - The crop should maintain aspect ratio close to 9:16 (0.5625)\n  - Typical crop for talking heads: width=810, height=1440\n- For screenshare: x,y are the top-left corner of main content area\n- Colors MUST be from the provided design kit palette only\n\nTALKING HEAD CROP RULES:\n- Default crop size: 810x1440 pixels (maintains 9:16 aspect ratio)\n- Adjust width/height if face is very large or small\n- Ensure the crop captures head and shoulders when possible\n- For profiles: ensure the ENTIRE head is centered, not just visible features\n\nSCREENSHARE DETECTION RULES:\n1. LEFT EDGE: Skip sidebars, find where main content starts\n2. RIGHT EDGE: Find the RIGHTMOST visible text/UI + 50px margin\n3. TOP/BOTTOM: First/last line of content (skip browser chrome)\n4. WIDTH: Distance from x to rightmost content + safety margin",
+        "imageUrls": "={{ $('Get a record').item.json['Thumbnail URL'] }}",
+        "options": {
+          "maxTokens": 500
+        }
+      },
+      "id": "d895d1ed-f706-4acc-a810-93c5975eeb77",
+      "name": "Detect Face Position",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2864,
+        3360
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "AGI4Iybca9Zzbg7q",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.variables.BASE_ID }}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.variables.CLIPS_TABLE }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Get a record').item.json.id }}",
+            "Assessed Width": "={{ $json.width }}",
+            "Assessed Height": "={{ $json.height }}",
+            "Assessed Center x-Width": "={{ $json.x }}",
+            "Assessed  Center y-Height": "={{ $json.y }}",
+            "Clip Type": "={{ $json.type }}",
+            "Clip Style": "={{ $json.clipStyle }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "Clip ID",
+              "displayName": "Clip ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Description (from Coaching Call)",
+              "displayName": "Description (from Coaching Call)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Created",
+              "displayName": "Created",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Clip Description",
+              "displayName": "Clip Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Actions",
+              "displayName": "Actions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Cropped Clip",
+              "displayName": "Cropped Clip",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Clip URL",
+              "displayName": "Clip URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Clip Type",
+              "displayName": "Clip Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "screenshare",
+                  "value": "screenshare"
+                },
+                {
+                  "name": "talking_head",
+                  "value": "talking_head"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "SRT",
+              "displayName": "SRT",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Start Time",
+              "displayName": "Start Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "End Time",
+              "displayName": "End Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Duration",
+              "displayName": "Duration",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Thumbnail URL",
+              "displayName": "Thumbnail URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Crop x-Width",
+              "displayName": "Crop x-Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Crop y-Height",
+              "displayName": "Crop y-Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Center x-Width",
+              "displayName": "Center x-Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Center y-Height",
+              "displayName": "Center y-Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Clip Left x-Width",
+              "displayName": "Clip Left x-Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Clip Top y-Height",
+              "displayName": "Clip Top y-Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Final Clip (watch me)",
+              "displayName": "Final Clip (watch me)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Callback/Update Webhook URL (from Actions)",
+              "displayName": "Callback/Update Webhook URL (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Brand",
+              "displayName": "Brand",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "All Videos URL (from Videos)",
+              "displayName": "All Videos URL (from Videos)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Parent AV",
+              "displayName": "Parent AV",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Video URL (from Videos)",
+              "displayName": "Video URL (from Videos)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Video Aspect Ratio (from Videos)",
+              "displayName": "Video Aspect Ratio (from Videos)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Clip Aspect Ratio (from Videos)",
+              "displayName": "Clip Aspect Ratio (from Videos)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Video x-Width (from Videos)",
+              "displayName": "Video x-Width (from Videos)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Video y-Height (from Videos)",
+              "displayName": "Video y-Height (from Videos)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Clip x-Width (from Videos)",
+              "displayName": "Clip x-Width (from Videos)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Clip y-Height (from Videos)",
+              "displayName": "Clip y-Height (from Videos)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Webhook URL (from Actions)",
+              "displayName": "Webhook URL (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "AUTO_ID (from Actions)",
+              "displayName": "AUTO_ID (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Assessed Width",
+              "displayName": "Assessed Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Assessed Height",
+              "displayName": "Assessed Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Assessed Center x-Width",
+              "displayName": "Assessed Center x-Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Assessed  Center y-Height",
+              "displayName": "Assessed  Center y-Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Record ID (from Brand)",
+              "displayName": "Record ID (from Brand)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Job ID",
+              "displayName": "Last Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Clip Style",
+              "displayName": "Clip Style",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "521cf439-30f9-4cd4-809f-3284d1c64d80",
+      "name": "Update Face Coords",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        3312,
+        3360
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Build JSON').item.json.type }}",
+                    "rightValue": "screenshare",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "9ae21697-0782-4c4c-b0af-f691f00c86a2"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "screenshare"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "a30465ed-9ed2-4041-942d-5ad36e44787b",
+                    "leftValue": "={{ $('Build JSON').item.json.type }}",
+                    "rightValue": "talking_head",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "talking_head"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a2147868-3679-4868-b21c-6708e380c11d",
+      "name": "Is it a Screenshare?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        3536,
+        3360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of items) {\n  try {\n    // Get the content field\n    let content = item.json.content;\n    \n    // Remove markdown code block formatting if present\n    content = content.replace(/^```json\\s*\\n?/i, '').replace(/\\n?```\\s*$/i, '');\n    \n    // Also trim any whitespace\n    content = content.trim();\n    \n    // Parse the cleaned JSON string\n    const parsedData = JSON.parse(content);\n    \n    console.log('Successfully parsed combined analysis:', parsedData);\n    \n    // Extract crop and color data\n    const cropData = parsedData.crop_analysis || {};\n    const colorData = parsedData.color_analysis || {};\n    \n    // Convert color analysis to JSON string for Airtable storage\n    const clipStyleJson = JSON.stringify(colorData);\n    \n    // Get original webhook data from the start of the workflow\n    const webhookData = $('Webhook').item.json;\n    const airtableRecord = $('Get a record').item.json;\n    \n    results.push({\n      json: {\n        ...item.json,\n        // Crop analysis fields (for compatibility with existing nodes)\n        type: cropData.type,\n        x: cropData.x,\n        y: cropData.y,\n        width: cropData.width,\n        height: cropData.height,\n        // Color analysis as JSON string for Airtable\n        clipStyle: clipStyleJson,\n        // Store full analysis for reference\n        cropAnalysis: cropData,\n        colorAnalysis: colorData,\n        originalContent: item.json.content,\n        // PRESERVE WEBHOOK DATA\n        webhookBody: webhookData.body,\n        webhookHeaders: webhookData.headers,\n        // PRESERVE AIRTABLE RECORD DATA\n        airtableRecord: airtableRecord,\n        // Extract key values for easy access\n        id: airtableRecord.id,\n        fields: airtableRecord.fields,\n        callbackUrl: webhookData.body.action.___CALLBACK_UPDATE_WEBHOOK_URL || webhookData.body.action.CALLBACK_UPDATE_WEBHOOK_URL\n      }\n    });\n  } catch (error) {\n    console.error('Failed to parse combined JSON:', error);\n    console.error('Original content:', item.json.content);\n    \n    // Even for errors, preserve the data\n    const webhookData = $('Webhook').item.json;\n    const airtableRecord = $('Get a record').item.json;\n    \n    results.push({\n      json: {\n        ...item.json,\n        error: `Failed to parse JSON: ${error.message}`,\n        parseError: true,\n        // PRESERVE WEBHOOK DATA EVEN ON ERROR\n        webhookBody: webhookData.body,\n        airtableRecord: airtableRecord,\n        id: airtableRecord.id,\n        fields: airtableRecord.fields,\n        callbackUrl: webhookData.body.action.___CALLBACK_UPDATE_WEBHOOK_URL || webhookData.body.action.CALLBACK_UPDATE_WEBHOOK_URL\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3088,
+        3360
+      ],
+      "id": "7b178aa3-421c-4a49-ae4f-ad4ac0b6d8d0",
+      "name": "Build JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Video IDs and create items for download - OPTIMIZED VERSION\nconst results = [];\n\nconsole.log('INPUT ITEMS:', items.length);\n\nfor (const item of items) {\n  try {\n    // Get record ID from fields.ID or fallback to id\n    const recordId = item.json.fields?.ID || item.json.id || 'unknown';\n    console.log('Processing record:', recordId);\n    \n    // Get MinIO base URL from webhook data\n    const minioBaseUrl = $('Webhook').item.json.body.variables.MINIO_STORAGE_URL;\n    \n    // Extract Google Drive IDs from Airtable fields\n    const activeSpeakerIds = item.json.fields?.[\"active-speaker video gdrive id (from Parent AV)\"];\n    const screenshareIds = item.json.fields?.[\"shared-screen video gdrive id (from Parent AV)\"];\n    \n    console.log(`Video IDs for ${recordId}:`, {\n      activeSpeaker: activeSpeakerIds,\n      screenshare: screenshareIds\n    });\n    \n    // Create item for active speaker video\n    if (activeSpeakerIds && Array.isArray(activeSpeakerIds) && activeSpeakerIds.length > 0) {\n      const activeSpeakerId = activeSpeakerIds[0];\n      results.push({\n        json: {\n          googleDriveId: activeSpeakerId,\n          videoType: 'active-speaker',\n          recordId: recordId,\n          minioBaseUrl: minioBaseUrl,\n          minioFilename: activeSpeakerId, // Use GDrive ID as filename\n          minioUrl: `${minioBaseUrl}${activeSpeakerId}`,\n          originalFields: item.json.fields,\n          startTime: parseFloat(item.json.fields['Start Time']) || 0,\n          endTime: parseFloat(item.json.fields['End Time']) || 0,\n          duration: (parseFloat(item.json.fields['End Time']) || 0) - (parseFloat(item.json.fields['Start Time']) || 0)\n        }\n      });\n      console.log(`✅ Added active speaker: ${activeSpeakerId}`);\n    }\n    \n    // Create item for screenshare video  \n    if (screenshareIds && Array.isArray(screenshareIds) && screenshareIds.length > 0) {\n      const screenshareId = screenshareIds[0];\n      results.push({\n        json: {\n          googleDriveId: screenshareId,\n          videoType: 'screenshare',\n          recordId: recordId,\n          minioBaseUrl: minioBaseUrl,\n          minioFilename: screenshareId, // Use GDrive ID as filename\n          minioUrl: `${minioBaseUrl}${screenshareId}`,\n          originalFields: item.json.fields,\n          startTime: parseFloat(item.json.fields['Start Time']) || 0,\n          endTime: parseFloat(item.json.fields['End Time']) || 0,\n          duration: (parseFloat(item.json.fields['End Time']) || 0) - (parseFloat(item.json.fields['Start Time']) || 0)\n        }\n      });\n      console.log(`✅ Added screenshare: ${screenshareId}`);\n    }\n    \n  } catch (error) {\n    console.error('Error processing item:', error);\n    results.push({\n      json: {\n        error: error.message,\n        videoType: 'error',\n        originalItem: item.json\n      }\n    });\n  }\n}\n\nconsole.log(`✅ FINAL: Created ${results.length} items for download`);\nreturn results;"
+      },
+      "id": "93412297-e151-4cd9-85ff-4dea9682f11b",
+      "name": "Parse Video URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3760,
+        3264
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fixed Build Stack Command - Preserves full screenshare content without cropping\n// This version properly handles aspect ratios and prevents content loss\n\nconst results = [];\n\n// Get webhook data and variables\nconst webhookData = $('Webhook').item.json;\nconst callbackUrl = webhookData.body.action.CALLBACK_WEBHOOK_URL;\nconst recordId = webhookData.body.recordId;\n\nconsole.log('Processing stack command for recordId:', recordId);\n\n// Get video URLs and metadata from previous nodes\nconst videoItems = $('Parse Video URLs').all();\nconst metadataItems = $('Get Video Metadata').all();\n\n// Find screenshare and active speaker data\nlet screenshareData = null;\nlet activeSpeakerData = null;\nlet screenshareMetadata = null;\nlet activeSpeakerMetadata = null;\n\n// Match video data with metadata by Google Drive ID\nfor (const videoItem of videoItems) {\n  const videoType = videoItem.json.videoType;\n  const googleDriveId = videoItem.json.googleDriveId;\n  \n  const metadataItem = metadataItems.find(m => m.json.id === googleDriveId);\n  \n  if (videoType === 'screenshare') {\n    screenshareData = videoItem.json;\n    screenshareMetadata = metadataItem ? metadataItem.json.response : null;\n  } else if (videoType === 'active-speaker') {\n    activeSpeakerData = videoItem.json;\n    activeSpeakerMetadata = metadataItem ? metadataItem.json.response : null;\n  }\n}\n\n// Validate we have both videos and metadata\nif (!screenshareData || !activeSpeakerData) {\n  return [{\n    json: {\n      recordId: recordId,\n      error: `Missing video data - Screenshare: ${!!screenshareData}, Active Speaker: ${!!activeSpeakerData}`,\n      ffmpegStackPayload: null\n    }\n  }];\n}\n\nif (!screenshareMetadata || !activeSpeakerMetadata) {\n  return [{\n    json: {\n      recordId: recordId,\n      error: `Missing metadata - Screenshare: ${!!screenshareMetadata}, Active Speaker: ${!!activeSpeakerMetadata}`,\n      ffmpegStackPayload: null\n    }\n  }];\n}\n\nconsole.log('Screenshare metadata:', {\n  id: screenshareData.googleDriveId,\n  width: screenshareMetadata.width,\n  height: screenshareMetadata.height,\n  aspectRatio: (screenshareMetadata.width / screenshareMetadata.height).toFixed(2)\n});\n\nconsole.log('Active speaker metadata:', {\n  id: activeSpeakerData.googleDriveId,\n  width: activeSpeakerMetadata.width,\n  height: activeSpeakerMetadata.height,\n  aspectRatio: (activeSpeakerMetadata.width / activeSpeakerMetadata.height).toFixed(2)\n});\n\n// Target vertical video dimensions (9:16 aspect ratio)\nconst targetWidth = 1080;\nconst targetHeight = 1920;\n\n// SMART LAYOUT CALCULATION\n// Instead of forcing dimensions, we'll scale to fit width and add padding\n\n// Calculate screenshare dimensions when scaled to fit target width\nconst screenshareOriginalWidth = screenshareMetadata.width;\nconst screenshareOriginalHeight = screenshareMetadata.height;\nconst screenshareAspectRatio = screenshareOriginalWidth / screenshareOriginalHeight;\n\n// Scale screenshare to fit width, calculate resulting height\nlet screenshareScaledWidth = targetWidth;\nlet screenshareScaledHeight = Math.round(targetWidth / screenshareAspectRatio);\n\n// If screenshare is too tall, cap it at 60% of total height and recalculate\nconst maxScreenshareHeight = Math.round(targetHeight * 0.6); // 60% max\nif (screenshareScaledHeight > maxScreenshareHeight) {\n  screenshareScaledHeight = maxScreenshareHeight;\n  screenshareScaledWidth = Math.round(maxScreenshareHeight * screenshareAspectRatio);\n}\n\n// Calculate active speaker dimensions\nconst activeSpeakerOriginalWidth = activeSpeakerMetadata.width;\nconst activeSpeakerOriginalHeight = activeSpeakerMetadata.height;\nconst activeSpeakerAspectRatio = activeSpeakerOriginalWidth / activeSpeakerOriginalHeight;\n\n// Remaining height for active speaker\nconst remainingHeight = targetHeight - screenshareScaledHeight;\n\n// Scale active speaker to fit remaining space\nlet activeSpeakerScaledWidth = targetWidth;\nlet activeSpeakerScaledHeight = Math.round(targetWidth / activeSpeakerAspectRatio);\n\n// If active speaker doesn't fit, scale it down\nif (activeSpeakerScaledHeight > remainingHeight) {\n  activeSpeakerScaledHeight = remainingHeight;\n  activeSpeakerScaledWidth = Math.round(remainingHeight * activeSpeakerAspectRatio);\n}\n\nconsole.log('Smart layout calculation:', {\n  targetDimensions: `${targetWidth}x${targetHeight}`,\n  screenshare: {\n    original: `${screenshareOriginalWidth}x${screenshareOriginalHeight}`,\n    scaled: `${screenshareScaledWidth}x${screenshareScaledHeight}`,\n    percentage: Math.round((screenshareScaledHeight / targetHeight) * 100) + '%'\n  },\n  activeSpeaker: {\n    original: `${activeSpeakerOriginalWidth}x${activeSpeakerOriginalHeight}`,\n    scaled: `${activeSpeakerScaledWidth}x${activeSpeakerScaledHeight}`,\n    percentage: Math.round((activeSpeakerScaledHeight / targetHeight) * 100) + '%'\n  }\n});\n\n// Build FFmpeg filter that preserves content\n// This filter scales to fit and adds padding (letterboxing/pillarboxing) as needed\nconst filter = \n  // Screenshare: scale to fit width, maintaining aspect ratio, then pad to exact dimensions\n  `[0:v]scale=${screenshareScaledWidth}:${screenshareScaledHeight}:force_original_aspect_ratio=decrease,` +\n  `pad=${targetWidth}:${screenshareScaledHeight}:(ow-iw)/2:(oh-ih)/2:black[screenshare];` +\n  \n  // Active speaker: scale to fit, maintaining aspect ratio, then pad\n  `[1:v]scale=${activeSpeakerScaledWidth}:${activeSpeakerScaledHeight}:force_original_aspect_ratio=decrease,` +\n  `pad=${targetWidth}:${activeSpeakerScaledHeight}:(ow-iw)/2:(oh-ih)/2:black[speaker];` +\n  \n  // Stack the two videos vertically\n  `[screenshare][speaker]vstack=inputs=2[stacked];` +\n  \n  // If the total height is less than target, add padding to reach 1920px\n  `[stacked]pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black[v]`;\n\nconsole.log('FFmpeg filter (content-preserving):', filter);\n\n// Get timing data\nconst startTime = screenshareData.startTime || 0;\nconst endTime = screenshareData.endTime || 0;\nconst duration = endTime - startTime;\n\n// Build FFmpeg compose payload with quality settings\nconst ffmpegPayload = {\n  id: recordId,\n  inputs: [\n    {\n      file_url: screenshareData.minioUrl,\n      options: [\n        { option: \"-ss\", argument: startTime.toString() },\n        { option: \"-t\", argument: duration.toString() }\n      ]\n    },\n    {\n      file_url: activeSpeakerData.minioUrl,\n      options: [\n        { option: \"-ss\", argument: startTime.toString() },\n        { option: \"-t\", argument: duration.toString() }\n      ]\n    }\n  ],\n  filters: [\n    {\n      filter: filter\n    }\n  ],\n  outputs: [\n    {\n      options: [\n        { option: \"-map\", argument: \"[v]\" },\n        { option: \"-map\", argument: \"0:a?\" }, // Audio from screenshare (if available)\n        { option: \"-c:v\", argument: \"libx264\" },\n        { option: \"-c:a\", argument: \"aac\" },\n        { option: \"-preset\", argument: \"slow\" },\n        { option: \"-crf\", argument: \"17\" }, // High quality\n        { option: \"-profile:v\", argument: \"high\" },\n        { option: \"-level\", argument: \"4.2\" },\n        { option: \"-pix_fmt\", argument: \"yuv420p\" },\n        { option: \"-movflags\", argument: \"+faststart\" },\n        { option: \"-b:a\", argument: \"192k\" },\n        { option: \"-ar\", argument: \"48000\" },\n        { option: \"-f\", argument: \"mp4\" }\n      ]\n    }\n  ],\n  metadata: {\n    thumbnail: true,\n    filesize: true,\n    duration: true,\n    bitrate: true,\n    encoder: true\n  },\n  webhook_url: callbackUrl\n};\n\n// Create result object\nconst result = {\n  json: {\n    id: recordId,\n    recordId: recordId,\n    \n    // Video information\n    screenshareUrl: screenshareData.minioUrl,\n    activeSpeakerUrl: activeSpeakerData.minioUrl,\n    \n    // FFmpeg payload\n    ffmpegStackPayload: ffmpegPayload,\n    \n    // Layout information\n    layoutStrategy: 'content-preserving',\n    targetDimensions: {\n      width: targetWidth,\n      height: targetHeight,\n      screenshare: {\n        scaledWidth: screenshareScaledWidth,\n        scaledHeight: screenshareScaledHeight,\n        percentage: Math.round((screenshareScaledHeight / targetHeight) * 100)\n      },\n      activeSpeaker: {\n        scaledWidth: activeSpeakerScaledWidth,\n        scaledHeight: activeSpeakerScaledHeight,\n        percentage: Math.round((activeSpeakerScaledHeight / targetHeight) * 100)\n      }\n    },\n    \n    // Original dimensions for reference\n    originalVideoDimensions: {\n      screenshare: {\n        width: screenshareOriginalWidth,\n        height: screenshareOriginalHeight,\n        aspectRatio: screenshareAspectRatio.toFixed(2)\n      },\n      activeSpeaker: {\n        width: activeSpeakerOriginalWidth,\n        height: activeSpeakerOriginalHeight,\n        aspectRatio: activeSpeakerAspectRatio.toFixed(2)\n      }\n    },\n    \n    // Timing\n    startTime: startTime,\n    endTime: endTime,\n    duration: duration,\n    \n    // Processing metadata\n    processingTimestamp: new Date().toISOString(),\n    filterUsed: filter,\n    success: true\n  }\n};\n\nconsole.log('✅ Built content-preserving FFmpeg stack payload');\nconsole.log('No content will be cropped - using letterboxing/pillarboxing as needed');\n\nreturn [result];"
+      },
+      "id": "32d0727e-7bce-4c0e-b773-2c99ad8cfe1a",
+      "name": "Build Stack Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4880,
+        3264
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://nca.everydaycreator.org/v1/ffmpeg/compose",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.ffmpegStackPayload) }}",
+        "options": {}
+      },
+      "id": "7ba3a70f-9105-40c2-b475-3c5096b0cda1",
+      "name": "Stack Screenshare Videos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5136,
+        3264
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JMY53dTaSMmX8vtJ",
+          "name": "NCA Toolkit"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crop-caption",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        3456
+      ],
+      "id": "b738d492-b596-49cc-aaa8-165f8c758dfc",
+      "name": "Webhook",
+      "webhookId": "a8300df9-8de8-4d9a-931a-fb52437a30d6"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "={{ $('Webhook').item.json.body.brand.DESIGN_KIT }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        2416,
+        3456
+      ],
+      "id": "7dc7af8a-85e6-4861-831e-28824d302ecd",
+      "name": "Get a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "G6iON3SaK1WrsMH3",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.action.AUTO_ID }}",
+                    "rightValue": 3,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "cb78c14b-4b50-46ce-bcd7-e5679a272cf1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Crop & Scale"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "08dfe73d-b087-4055-aa1f-9739183082d5",
+                    "leftValue": "={{ $('Webhook').item.json.body.action.AUTO_ID }}",
+                    "rightValue": 4,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Caption"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2640,
+        3456
+      ],
+      "id": "825b2eeb-7231-4690-a07b-1d7b14f6d023",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "={{ $json.body.variables.BASE_ID }}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $json.body.variables.CLIPS_TABLE }}",
+          "mode": "id"
+        },
+        "id": "={{ $json.body.recordId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2192,
+        3456
+      ],
+      "id": "ef141fad-f708-4ac4-b844-f1703d51b6a5",
+      "name": "Get a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "text": "=You are analyzing a video thumbnail to determine optimal caption placement. Your task is to find the best empty/clear space for captions that avoids overlapping with important visual elements.\n\n**VIDEO DIMENSIONS**: {{ $('Get a record').item.json['Clip x-Width (from Videos)'][0] }} x {{ $('Get a record').item.json['Clip y-Height (from Videos)'][0] }} pixels\n\n**ANALYSIS REQUIREMENTS**:\n\n1. **IDENTIFY ALL VISUAL ELEMENTS**: \n   - Locate all faces/heads in the frame\n   - Identify any screenshare content, browser windows, or presentation slides\n   - Note any logos, graphics, or important visual elements\n   - Map out areas of consistent background color or texture\n\n2. **FIND EMPTY SPACES**:\n   - Look for horizontal bands of consistent color/texture across the full width\n   - Prioritize areas between stacked videos (common in screenshare setups)\n   - Consider areas above or below main content\n   - Identify regions with minimal visual activity or importance\n   - Avoid areas where text would overlap faces, screens, or key content\n\n3. **EVALUATE EACH POTENTIAL AREA**:\n   - Check for consistent background that provides good contrast\n   - Ensure the area is wide enough for 4-word captions\n   - Verify no important content would be obscured\n   - Consider visual balance of the overall composition\n\n**CAPTION SPECIFICATIONS**:\n- Always exactly 1 line with maximum 4 words\n- Font: \"The Bold Font\" at 72px (optimal for readability)\n- Width approximately 70% of screen width when rendered\n- Must have strong contrast against chosen background\n\n**APPROVED COLOR PALETTE** (you MUST only use colors from this list):\n{{ $('Get a document').item.json.content }}\n\n**RESPOND WITH ONLY THIS JSON FORMAT - NO OTHER TEXT**:\n\n```json\n{\n  \"visual_analysis\": {\n    \"faces_location\": \"[describe where faces are: top/middle/bottom]\",\n    \"screenshare_location\": \"[describe screenshare position if present]\",\n    \"empty_spaces\": [\n      {\n        \"y_range\": \"[y_start-y_end]\",\n        \"description\": \"[what makes this area suitable]\"\n      }\n    ]\n  },\n  \"caption_placement\": {\n    \"x\": 540,\n    \"y\": [optimal_y_coordinate],\n    \"font_size\": 72,\n    \"reasoning\": \"Detailed explanation of why this position was chosen\"\n  },\n  \"style_colors\": {\n    \"text_color\": \"[hex_color_from_palette]\",\n    \"stroke_color\": \"[hex_color_from_palette]\",\n    \"highlight_color\": \"[hex_color_from_palette]\",\n    \"reasoning\": \"Why these colors provide best contrast in chosen area\"\n  }\n}\n```\n\n**PLACEMENT STRATEGY**:\n- X: Always center at 540 (half of 1080px width)\n- Y: Find the clearest horizontal band that avoids all important content\n- Don't default to bottom - actively search top, middle, and bottom thirds\n- For screenshares with stacked videos, prioritize the gap between them\n- Choose position based on maximum clearance from visual elements\n\nCRITICAL: Analyze the ENTIRE frame thoroughly. Don't assume bottom placement. Find the genuinely emptiest, clearest space for optimal readability without obscuring content.",
+        "imageUrls": "={{ $('Get a record').item.json['Thumbnail URL'] }}",
+        "options": {
+          "detail": "high",
+          "maxTokens": 500
+        }
+      },
+      "id": "ccea0854-63c4-46c8-bb8b-e22f939596a6",
+      "name": "Caption Placement",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2864,
+        3856
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "AGI4Iybca9Zzbg7q",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.googleDriveId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3984,
+        3264
+      ],
+      "id": "9302894c-c8eb-4eec-a59b-33f392838b51",
+      "name": "Download file",
+      "credentials": {
+        "googleApi": {
+          "id": "dAlqDXSNQgdH8ZiL",
+          "name": "Service Account Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "nca",
+        "fileName": "={{ $json.googleDriveId }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        4208,
+        3264
+      ],
+      "id": "7b9208f0-6123-444c-9974-addf6ebf74c1",
+      "name": "Upload to MinIO S3",
+      "credentials": {
+        "s3": {
+          "id": "BNbSyxpLFFUOHCFu",
+          "name": "MiniO"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4416,
+        3264
+      ],
+      "id": "a6cbcc71-6ed6-4bfd-abf4-7458a3e51f8a",
+      "name": "Wait",
+      "webhookId": "3eb37778-eee6-4a8f-881d-ad2e460c89d3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://nca.everydaycreator.org/v1/media/metadata",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"media_url\": \"{{ $('Parse Video URLs').item.json.minioUrl }}\",\n  \"id\": \"{{ $('Parse Video URLs').item.json.googleDriveId }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4624,
+        3264
+      ],
+      "id": "9e053917-a80b-42c0-8efa-db6423cce6ea",
+      "name": "Get Video Metadata",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "JMY53dTaSMmX8vtJ",
+          "name": "NCA Toolkit"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.everydaycreator.org",
+            "user-agent": "Mozilla/5.0 (compatible; AirtableScripting; +https://airtable.com/developers/scripting;)",
+            "content-length": "1864",
+            "accept": "*/*",
+            "accept-encoding": "gzip,deflate",
+            "content-type": "application/json",
+            "x-airtable-source": "appS7qip5wnjgQwKL/wfl3LcoyEfRg0uu5e",
+            "x-forwarded-for": "3.220.167.75",
+            "x-forwarded-host": "n8n.everydaycreator.org",
+            "x-forwarded-proto": "https",
+            "x-real-ip": "3.220.167.75"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "recordId": "recuTX9JMbYUSDVp8",
+            "action": {
+              "ACTION_NAME": "Caption",
+              "PROMPT_URL": "https://docs.google.com/document/d/14U4xu9DSbXGT-Upb4Yi2Q4W7xcH6flxNOzK9ECqY3Fw/edit?tab=t.0",
+              "AUTO_ID": 4,
+              "CONTENT": null,
+              "ACTION": "Caption [4]",
+              "___ACTIVE": true,
+              "___WEBHOOK_URL": "https://n8n.everydaycreator.org/webhook-test/crop-caption",
+              "JOB_ROLE": [
+                {
+                  "id": "selkjj6t36YQkd9iC",
+                  "name": "video_editor",
+                  "color": "cyanLight2"
+                }
+              ],
+              "CALLBACK_WEBHOOK_URL": "https://hooks.airtable.com/workflows/v1/genericWebhook/appS7qip5wnjgQwKL/wfl8hbnro1uvvDxw0/wtr8AqysZJveoFIBh",
+              "RECORD_ID": "recvsYyACbzyBFPHH",
+              "VIDEOS": null,
+              "CLIPS": null
+            },
+            "brand": {
+              "NAME": "francis.waldecker@gmail.com",
+              "GOOGLE_FOLDER_ROOT_ID": "1ormr2eHeEW3gqwKW8CTFZUG-jHHkoZCa",
+              "BRAND_KIT": "1RrPxvVGuKczy3mELVDyqG2lrsmMfaY6f2zP2QAANZHo\n",
+              "DESIGN_KIT": "1bBp00SlMQ8yJqSpYkqA9NgWksNtqYHaTnUgHoZCvj6Q\n",
+              "PROMPTS_DOC": "1iqUmYxPp_bqFTCRIqVeji5vfo5LkR3o9HrzD_UG-Ak8",
+              "RECORD_ID": "reci9cW5bHd2FSuDG",
+              "BRAND_EMAIL": "francis.waldecker@gmail.com",
+              "CAPTION_FONT": "The Bold Font",
+              "SAVE_PARENT_VIDEO": {
+                "id": "selzi1YzEwH5NLDjB",
+                "name": "True",
+                "color": "blueLight2"
+              },
+              "BRAND_STORY": "11OwsNHdnlQuX6vdk8riBzHYnRxOTrSd1xEsxihR3Re4"
+            },
+            "variables": {
+              "MODEL_ID": "eleven_multilingual_v2",
+              "MINIO_STORAGE_URL": "https://minio-api.everydaycreator.org/nca/",
+              "VIDEO_TABLE": "tblg75MyQZREAqUKk",
+              "VOICE_ID": "B1S0UIUAf6BKJsaAJ3B1",
+              "HEYGEN_VIDEO_WIDTH": "1280",
+              "CLIPS_TABLE": "tbla7ulgJbex5ePsY",
+              "CONTENT_TABLE": "tblCR8yF9HHQlDij1",
+              "HEYGEN_VIDEO_HEIGHT": "720",
+              "HEYGEN_AVATAR_ID": "60b18e0f08a84a78af8490fa05622cdf",
+              "SIMILARITY_BOOST": "0.65",
+              "N8N_PRODUCTION": "true",
+              "HEYGEN_VOICE_ID": "769409544dd944ed92ac5d1f0f1d1a71",
+              "STABILITY": "0.65",
+              "BASE_ID": "appS7qip5wnjgQwKL",
+              "HEYGEN_CALLBACK_WEBHOOK_URL": "https://hooks.airtable.com/workflows/v1/genericWebhook/appS7qip5wnjgQwKL/wfl6zob2Q0VQM5q6g/wtrGdgNNq5r9NOQkq",
+              "GOOGLE_FOLDER_ROOT_ID": "1hhne5dm3ZSIjl1VstIRJ6UYar5Br_kMA",
+              "STYLE": "0"
+            }
+          },
+          "webhookUrl": "https://n8n.everydaycreator.org/webhook/crop-caption",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Detect Face Position": {
+      "main": [
+        [
+          {
+            "node": "Build JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Face Coords": {
+      "main": [
+        [
+          {
+            "node": "Is it a Screenshare?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is it a Screenshare?": {
+      "main": [
+        [
+          {
+            "node": "Parse Video URLs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crop API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Video URLs": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Stack Command": {
+      "main": [
+        [
+          {
+            "node": "Stack Screenshare Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Style Validator": {
+      "main": [
+        [
+          {
+            "node": "Add Captions API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build JSON": {
+      "main": [
+        [
+          {
+            "node": "Update Face Coords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stack Screenshare Videos": {
+      "main": [
+        []
+      ]
+    },
+    "Crop API": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a record": {
+      "main": [
+        [
+          {
+            "node": "Get a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Detect Face Position",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Caption Placement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Caption Placement": {
+      "main": [
+        [
+          {
+            "node": "Style Validator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Upload to MinIO S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to MinIO S3": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Video Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Video Metadata": {
+      "main": [
+        [
+          {
+            "node": "Build Stack Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "24d5afe6-8a2f-4acd-a8f5-4f7ca4b66b6f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6feeec6266ce5c242c41c4306324474e994ecb1129cd2b23d76b6746965b634"
+  },
+  "id": "lKUaITpZvp2G5q1E",
+  "tags": []
+}

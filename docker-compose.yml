@@ -1,0 +1,185 @@
+version: '3.8'
+
+# Docker volumes for persistent data
+volumes:
+  n8n_storage:
+    name: everydayos_n8n_storage
+  postgres_data:
+    name: everydayos_postgres_data
+  minio_data:
+    name: everydayos_minio_data
+  caddy_data:
+    name: everydayos_caddy_data
+  caddy_config:
+    name: everydayos_caddy_config
+  valkey_data:
+    name: everydayos_valkey_data
+  nca_data:
+    name: everydayos_nca_data
+
+networks:
+  everydayos:
+    name: everydayos_network
+    driver: bridge
+
+services:
+  # PostgreSQL Database for n8n
+  postgres:
+    image: postgres:15-alpine
+    container_name: everydayos_postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - everydayos
+
+  # N8N Workflow Automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: everydayos_n8n
+    restart: unless-stopped
+    expose:
+      - 5678
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_USER=postgres
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_POSTGRESDB_DATABASE=postgres
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+      - N8N_PROTOCOL=https
+      - N8N_HOST=n8n.${BASE_DOMAIN}
+      - N8N_WEBHOOK_URL=https://n8n.${BASE_DOMAIN}
+      - N8N_EDITOR_BASE_URL=https://n8n.${BASE_DOMAIN}
+      - WEBHOOK_URL=https://n8n.${BASE_DOMAIN}
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      # Support for large file uploads (5GB)
+      - N8N_PAYLOAD_SIZE_MAX=5120
+      - NODE_OPTIONS=--max-old-space-size=4096
+    volumes:
+      - n8n_storage:/home/node/.n8n
+      - ./n8n-workflows:/workflows:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - everydayos
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Redis/Valkey Cache (for n8n scaling and NCA toolkit)
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: everydayos_valkey
+    restart: unless-stopped
+    expose:
+      - 6379
+    volumes:
+      - valkey_data:/data
+    command: valkey-server --save 30 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - everydayos
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: everydayos_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: https://minio-console.${BASE_DOMAIN}
+    volumes:
+      - minio_data:/data
+    expose:
+      - 9000
+      - 9001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
+    networks:
+      - everydayos
+
+  # NCA Toolkit - Video Processing and Document Analysis
+  nca-toolkit:
+    build:
+      context: ./docker/nca-toolkit
+      dockerfile: Dockerfile
+    container_name: everydayos_nca
+    restart: unless-stopped
+    expose:
+      - 8080
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - API_KEY=${NCA_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - S3_ENDPOINT_URL=http://minio:9000
+      - S3_ACCESS_KEY=${MINIO_ROOT_USER}
+      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - S3_REGION=us-east-1
+      - S3_BUCKET_NAME=nca
+    volumes:
+      - nca_data:/app/data
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - everydayos
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Caddy Reverse Proxy
+  caddy:
+    image: caddy:2.8.4-alpine
+    container_name: everydayos_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    depends_on:
+      - n8n
+      - minio
+      - nca-toolkit
+    networks:
+      - everydayos

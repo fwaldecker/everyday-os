@@ -1,0 +1,2018 @@
+{
+  "name": "Everyday Brain (LIVE)",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE document_metadata (\n    id TEXT PRIMARY KEY,\n    title TEXT,\n    url TEXT,\n    created_at TIMESTAMP DEFAULT NOW(),\n    schema TEXT\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1856,
+        720
+      ],
+      "id": "22ba26e1-274e-4417-8ebe-195928e64505",
+      "name": "Create Document Metadata Table",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE document_rows (\n    id SERIAL PRIMARY KEY,\n    dataset_id TEXT REFERENCES document_metadata(id),\n    row_data JSONB  -- Store the actual row data\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1648,
+        720
+      ],
+      "id": "6752c4c7-134e-4d52-a062-502031d55043",
+      "name": "Create Document Rows Table (for Tabular Data)",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Enable the pgvector extension to work with embedding vectors\ncreate extension vector;\n\n-- Create a table to store your documents\ncreate table documents (\n  id bigserial primary key,\n  content text, -- corresponds to Document.pageContent\n  metadata jsonb, -- corresponds to Document.metadata\n  embedding vector(1536) -- 1536 works for OpenAI embeddings, change if needed\n);\n\n-- Create a function to search for documents\ncreate function match_documents (\n  query_embedding vector(1536),\n  match_count int default null,\n  filter jsonb DEFAULT '{}'\n) returns table (\n  id bigint,\n  content text,\n  metadata jsonb,\n  similarity float\n)\nlanguage plpgsql\nas $$\n#variable_conflict use_column\nbegin\n  return query\n  select\n    id,\n    content,\n    metadata,\n    1 - (documents.embedding <=> query_embedding) as similarity\n  from documents\n  where metadata @> filter\n  order by documents.embedding <=> query_embedding\n  limit match_count;\nend;\n$$;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -2064,
+        720
+      ],
+      "id": "d48baa2b-5c63-4f3f-afd7-1cb16e6ebc1f",
+      "name": "Create Documents Table and Match Function",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Run Each Node Once to Set Up Database Tables",
+        "height": 300,
+        "width": 680,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2128,
+        624
+      ],
+      "typeVersion": 1,
+      "id": "44c726dd-1d11-4743-aadb-12e4d18fe5f1",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "content": "## 🚀 Ultimate n8n Agentic RAG Template\n\n**Author:** [Cole Medin](https://www.youtube.com/@ColeMedin)\n\n## What is this?\nThis template provides a complete implementation of an **Agentic RAG (Retrieval Augmented Generation)** system in n8n that can be extended easily for your specific use case and knowledge base. Unlike standard RAG which only performs simple lookups, this agent can reason about your knowledge base, self-improve retrieval, and dynamically switch between different tools based on the specific question.\n\n## Why Agentic RAG?\nStandard RAG has significant limitations:\n- Poor analysis of numerical/tabular data\n- Missing context due to document chunking\n- Inability to connect information across documents\n- No dynamic tool selection based on question type\n\n## What makes this template powerful:\n- **Intelligent tool selection**: Switches between RAG lookups, SQL queries, or full document retrieval based on the question\n- **Complete document context**: Accesses entire documents when needed instead of just chunks\n- **Accurate numerical analysis**: Uses SQL for precise calculations on spreadsheet/tabular data\n- **Cross-document insights**: Connects information across your entire knowledge base\n- **Multi-file processing**: Handles multiple documents in a single workflow loop\n- **Efficient storage**: Uses JSONB in Supabase to store tabular data without creating new tables for each CSV\n\n## Getting Started\n1. Run the table creation nodes first to set up your database tables in Supabase\n2. Upload your documents through Google Drive (or swap out for a different file storage solution)\n3. The agent will process them automatically (chunking text, storing tabular data in Supabase)\n4. Start asking questions that leverage the agent's multiple reasoning approaches\n\n## Customization\nThis template provides a solid foundation that you can extend by:\n- Tuning the system prompt for your specific use case\n- Adding document metadata like summaries\n- Implementing more advanced RAG techniques\n- Optimizing for larger knowledge bases\n\n---\n\nI do intend on making a local version of this agent very soon!",
+        "height": 1320,
+        "width": 540,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2000,
+        -768
+      ],
+      "typeVersion": 1,
+      "id": "74139e5f-c956-4b0a-8c98-e660cf5960fb",
+      "name": "Sticky Note15"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 16
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -784,
+        -400
+      ],
+      "id": "f8ee7893-7984-4293-9347-1bf4b61374cc",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.zoom.us/v2/users/me/recordings?from={{ $json.fromDate }}&to={{ $json.toDate }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zoomOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        -384
+      ],
+      "id": "c5843800-1a0d-40f2-92be-34aa70aaa4a8",
+      "name": "Get Recordings by Date",
+      "credentials": {
+        "zoomOAuth2Api": {
+          "id": "h0Cgs2xoPfOYKzbp",
+          "name": "Zoom account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "meetings",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        -96
+      ],
+      "id": "57fd46d8-b100-4328-b07e-dd75574c646c",
+      "name": "Split Meetings"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all records from the Airtable node\nconst allRecords = $input.all().map(item => item.json);\n\n// Filter for records that have a Meeting ID (indicating they're from Zoom)\nconst zoomRecords = allRecords.filter(record => {\n  return record['Meeting ID'] && \n         record['Start'] && \n         !record['Meeting ID'].error;\n});\n\n// If no Zoom records found, default to last 30 days\nif (zoomRecords.length === 0) {\n  const now = DateTime.now();\n  const thirtyDaysAgo = now.minus({ days: 30 });\n  \n  return [{\n    json: {\n      fromDate: thirtyDaysAgo.toFormat('yyyy-MM-dd'),\n      toDate: now.toFormat('yyyy-MM-dd')\n    }\n  }];\n}\n\n// Find the latest Zoom video by Start date\nconst latestZoomVideo = zoomRecords.reduce((latest, current) => {\n  const currentDate = DateTime.fromISO(current['Start']);\n  const latestDate = DateTime.fromISO(latest['Start']);\n  return currentDate > latestDate ? current : latest;\n});\n\n// Parse the latest video date\nconst latestVideoDate = DateTime.fromISO(latestZoomVideo['Start']);\n\n// Get current date using n8n's $now\nconst now = DateTime.now();\nconst tomorrow = now.plus({ days: 1 });\n\n// Format dates for Zoom API (yyyy-MM-dd format)\nconst fromDateFormatted = latestVideoDate.toFormat('yyyy-MM-dd');\nconst toDateFormatted = tomorrow.toFormat('yyyy-MM-dd');\n\n// Return only the dates needed for Zoom API\nreturn [{\n  json: {\n    fromDate: fromDateFormatted,\n    toDate: toDateFormatted\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -384
+      ],
+      "id": "8d535ec6-1192-4b47-8dc1-6d497bc04ef6",
+      "name": "Prepare Date Range"
+    },
+    {
+      "parameters": {
+        "content": "## Trigger",
+        "height": 260,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -896,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "141fd1d8-ad64-426c-abd4-f11048096ce6",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Get Recordings by Date Range",
+        "height": 260,
+        "width": 720,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -528,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "22956fa8-829e-42a1-9da2-e36b0ea39270",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "## Split Recording Files",
+        "height": 260,
+        "width": 320,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -640,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "90917402-5a81-4445-9359-15887eabdb57",
+      "name": "Sticky Note16"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4.1-nano",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        288
+      ],
+      "id": "bd792ac9-a6f1-450e-bb0c-d759c74e0737",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "mJTUD3BdYGu9Mhhw",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Meeting Topic: {{ $('Package Meeting Data').item.json.topic }}\nMeeting Participants: {{ JSON.stringify($('Get Participants').item.json.participants) }}\n\nTranscript: {{ $json.output }}",
+        "options": {
+          "systemMessage": "=You are a call classification system. Analyze the transcript and participant data to:\n\n1. Classify the call as exactly one of these types:\n   - SOLO: One person talking alone, creating content, thinking out loud\n   - PODCAST: Casual conversation between multiple people, free-flowing discussion\n   - DEMO: Structured interview/consultation to build brand kit and content examples\n   - SALES: Business discussion about purchasing services or implementation\n\n2. Extract participant information:\n   - Identify the host (the meeting organizer/owner)\n   - Identify other participants as contacts (exclude the host from contacts)\n   - For SOLO calls, there should be NO contacts, only the host\n\nRules:\n- If only one participant exists, it's SOLO with that person as host and empty contacts\n- The host is typically the person who organized/is leading the meeting\n- Contacts array should ONLY include non-host participants\n- Match speaker names in transcript to participant names when possible\n\nReturn a JSON object with this exact structure:\n{\n  \"callType\": \"SOLO|PODCAST|DEMO|SALES\",\n  \"host\": {\n    \"name\": \"host name\",\n    \"email\": \"host email\"\n  },\n  \"contacts\": [\n    {\n      \"name\": \"participant name\",\n      \"email\": \"participant email\",\n      \"phone\": \"phone if mentioned in transcript or null\"\n    }\n  ]\n}\n\nFor SOLO calls, contacts array should be empty: []\nFor other calls, contacts array contains all non-host participants"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        128
+      ],
+      "id": "e1c15d92-6bb7-4427-8b43-12aefd50069d",
+      "name": "AI Classify Call Type"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process ALL meetings from Split Meetings\nconst results = [];\n\nfor (const item of $input.all()) {\n  const meeting = item.json;\n\n  // Extract all recording files\n  const recordingFiles = meeting.recording_files || [];\n\n  // Define file types we care about\n  const videoTypes = ['active_speaker', 'shared_screen', 'shared_screen_with_speaker_view'];\n  const audioTypes = ['audio_only'];\n  const transcriptTypes = ['audio_transcript'];\n\n  // Separate files by type\n  const videoFiles = recordingFiles.filter(file => videoTypes.includes(file.recording_type));\n  const audioFiles = recordingFiles.filter(file => audioTypes.includes(file.recording_type));\n  const transcriptFiles = recordingFiles.filter(file => transcriptTypes.includes(file.recording_type));\n\n  // Get the transcript file specifically\n  const transcriptFile = transcriptFiles[0] || null;\n\n  // Format date and time from meeting start_time\n  let dateString = 'unknown-date';\n  let timeString = 'unknown-time';\n\n  if (meeting.start_time) {\n    const startTime = new Date(meeting.start_time);\n    dateString = startTime.toISOString().split('T')[0];\n    timeString = startTime.toTimeString().split(' ')[0].replace(/:/g, '-');\n  }\n\n  // Package all files with proper metadata\n  const allFiles = [];\n\n  // Add video files (or audio if no video)\n  const mediaFiles = videoFiles.length > 0 ? videoFiles : audioFiles;\n  mediaFiles.forEach(file => {\n    allFiles.push({\n      downloadUrl: file.download_url,\n      fileName: `${file.recording_type}_${dateString}_${timeString}.${file.file_extension.toLowerCase()}`,\n      recordingType: file.recording_type,\n      fileType: file.file_type,\n      fileSize: file.file_size\n    });\n  });\n\n  // Add transcript file to files array\n  if (transcriptFile) {\n    allFiles.push({\n      downloadUrl: transcriptFile.download_url,\n      fileName: `transcript_${dateString}_${timeString}.vtt`,\n      recordingType: transcriptFile.recording_type,\n      fileType: transcriptFile.file_type,\n      fileSize: transcriptFile.file_size\n    });\n  }\n\n  // Add this meeting's packaged data to results\n  results.push({\n    json: {\n      meetingId: meeting.id,\n      uuid: meeting.uuid,\n      topic: meeting.topic,\n      startTime: meeting.start_time,\n      duration: meeting.duration,\n      hostId: meeting.host_id,\n      shareUrl: meeting.share_url,\n      recordingPlayPasscode: meeting.recording_play_passcode,\n      dateString: dateString,\n      timeString: timeString,\n      files: allFiles,\n      transcriptUrl: transcriptFile ? transcriptFile.download_url : null,\n      hasVideo: videoFiles.length > 0,\n      hasTranscript: transcriptFile !== null\n    }\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        -96
+      ],
+      "id": "85ac57d8-0507-404c-87ee-a7a0ca2fe139",
+      "name": "Package Meeting Data"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.zoom.us/v2/report/meetings/{{$json.uuid}}/participants",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zoomOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -176,
+        -96
+      ],
+      "id": "08c87bd1-73c8-47e0-8f1a-31bb96b79e77",
+      "name": "Get Participants",
+      "credentials": {
+        "zoomOAuth2Api": {
+          "id": "h0Cgs2xoPfOYKzbp",
+          "name": "Zoom account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Package Meeting Data').item.json.transcriptUrl }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zoomOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        32,
+        -96
+      ],
+      "id": "ed52ee94-0866-4006-8b5f-1f5e961feaa2",
+      "name": "Download Transcriptions Files",
+      "credentials": {
+        "zoomOAuth2Api": {
+          "id": "h0Cgs2xoPfOYKzbp",
+          "name": "Zoom account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Función principal para todos los ítems en el nodo Function\nconst results = [];\n\nfor (const item of $input.all()) {\n  const vttContent = item.json.data;\n\n  const cleanedLines = vttContent\n    .split('\\n')\n    .map(line => line.trim())\n    .filter(line => line !== 'WEBVTT')\n    .filter(line => !/^\\d+$/.test(line))\n    .filter(line => !/^\\d{2}:\\d{2}:\\d{2}\\.\\d{3} -->/.test(line))\n    .filter(line => line !== '');\n\n  let conversation = [];\n  let currentSpeaker = null;\n  let currentText = [];\n\n  for (let line of cleanedLines) {\n    const match = line.match(/^([^:]+):\\s*(.*)$/);\n    if (match) {\n      const speaker = match[1].trim();\n      const text = match[2].trim();\n\n      if (speaker !== currentSpeaker && currentSpeaker !== null) {\n        conversation.push(`${currentSpeaker}: ${currentText.join(' ')}\\n`);\n        currentText = [];\n      }\n\n      currentSpeaker = speaker;\n      currentText.push(text);\n    } else if (currentSpeaker) {\n      currentText.push(line.trim());\n    }\n  }\n\n  if (currentSpeaker && currentText.length > 0) {\n    conversation.push(`${currentSpeaker}: ${currentText.join(' ')}\\n`);\n  }\n\n  const result = conversation.join('');\n\n  results.push({\n    json: {\n      output: result\n    }\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "6503ddd8-d142-4285-a8bf-b1a991032de9",
+      "name": "Text Convert"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process ALL items from AI Classify Call Type\nconst results = [];\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const aiItem = $input.all()[i];\n  \n  // Parse the AI's JSON response\n  let aiResponse;\n  try {\n    aiResponse = JSON.parse(aiItem.json.output);\n  } catch (e) {\n    // Fallback if AI didn't return valid JSON\n    aiResponse = {\n      callType: 'UNKNOWN',\n      host: { name: '', email: '' },\n      contacts: []\n    };\n  }\n\n  // Get corresponding meeting data and transcript for this item\n  const meetingData = $('Package Meeting Data').all()[i].json;\n  const transcript = $('Text Convert').all()[i].json.output || '';\n\n  // Create folder name based on call type\n  let folderName = '';\n  if (aiResponse.callType === 'SOLO' || aiResponse.callType === 'PODCAST') {\n    const cleanTopic = (meetingData.topic || 'Untitled').replace(/[^a-zA-Z0-9 -]/g, '').substring(0, 50);\n    folderName = `VID_${cleanTopic}`;\n  } else if (aiResponse.callType === 'DEMO' || aiResponse.callType === 'SALES') {\n    // Use first contact's name for folder\n    const primaryContact = aiResponse.contacts[0];\n    folderName = primaryContact?.name || 'Unknown Contact';\n  }\n\n  // Get contact emails for easy access\n  const contactEmails = aiResponse.contacts.map(c => c.email).filter(e => e);\n  const contactNames = aiResponse.contacts.map(c => c.name).filter(n => n);\n\n  // Add this processed item to results\n  results.push({\n    json: {\n      ...meetingData,\n      callType: aiResponse.callType,\n      host: aiResponse.host,\n      contacts: aiResponse.contacts,\n      folderName: folderName,\n      transcript: transcript,\n      contactEmails: contactEmails,\n      contactNames: contactNames,\n      hasContacts: aiResponse.contacts.length > 0,\n      primaryContact: aiResponse.contacts[0] || null\n    }\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        128
+      ],
+      "id": "41b6ae6f-0d37-49d1-aae2-86277d0d97a5",
+      "name": "Process AI Classification"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appS7qip5wnjgQwKL",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblg75MyQZREAqUKk",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Brand": "={{ [$json.host.email] }}",
+            "Description": "={{ $json.topic }}",
+            "Start": "={{ $json.startTime }}",
+            "Meeting ID": "={{$json.uuid.toString()}}",
+            "Meeting Type": "={{ $json.callType }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "AUTO_ID",
+              "displayName": "AUTO_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Actions",
+              "displayName": "Actions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Brand",
+              "displayName": "Brand",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Shared screen w/ speaker video gdrive id",
+              "displayName": "Shared screen w/ speaker video gdrive id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "SRT URL",
+              "displayName": "SRT URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Transcript URL",
+              "displayName": "Transcript URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Video Width",
+              "displayName": "Video Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Video Height",
+              "displayName": "Video Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Clip Width",
+              "displayName": "Clip Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Clip Height",
+              "displayName": "Clip Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Video Clips",
+              "displayName": "Video Clips",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Duration",
+              "displayName": "Duration",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Segments URL",
+              "displayName": "Segments URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Video Aspect Ratio",
+              "displayName": "Video Aspect Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Clip Aspect Ratio",
+              "displayName": "Clip Aspect Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "SRT",
+              "displayName": "SRT",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Logs",
+              "displayName": "Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "AUTO_ID (from Actions)",
+              "displayName": "AUTO_ID (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Webhook URL (from Actions)",
+              "displayName": "Webhook URL (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Callback/Update Webhook URL (from Actions)",
+              "displayName": "Callback/Update Webhook URL (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Record ID (from Brand)",
+              "displayName": "Record ID (from Brand)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Job ID",
+              "displayName": "Last Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Meeting Type",
+              "displayName": "Meeting Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Solo",
+                  "value": "Solo"
+                },
+                {
+                  "name": "Podcast",
+                  "value": "Podcast"
+                },
+                {
+                  "name": "SOLO",
+                  "value": "SOLO"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Start",
+              "displayName": "Start",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Meeting ID",
+              "displayName": "Meeting ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Google Folder Root ID (from Brand)",
+              "displayName": "Google Folder Root ID (from Brand)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Doc ID",
+              "displayName": "Doc ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "All Videos URL",
+              "displayName": "All Videos URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "VIdeo Type",
+              "displayName": "VIdeo Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Solo",
+                  "value": "Solo"
+                },
+                {
+                  "name": "Podcast",
+                  "value": "Podcast"
+                },
+                {
+                  "name": "Demo",
+                  "value": "Demo"
+                },
+                {
+                  "name": "Sales",
+                  "value": "Sales"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder URL",
+              "displayName": "Folder URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder ID",
+              "displayName": "Folder ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "active-speaker video gdrive id",
+              "displayName": "active-speaker video gdrive id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "shared-screen video gdrive id",
+              "displayName": "shared-screen video gdrive id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        656,
+        128
+      ],
+      "id": "f600ce34-3a85-4cd7-b448-d20fa43a7bb3",
+      "name": "Creator Video Record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appS7qip5wnjgQwKL",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblg75MyQZREAqUKk",
+          "mode": "id"
+        },
+        "id": "={{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        128
+      ],
+      "id": "14cbc11d-eccc-453b-84ed-cf5a856417c9",
+      "name": "Get meeting record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7efc6bef-e731-465f-88c1-f34bdcc1398e",
+              "name": "uuid",
+              "value": "={{ $('Process AI Classification').item.json.uuid }}",
+              "type": "string"
+            },
+            {
+              "id": "35649da9-4cee-40a6-a8d3-e12fb32bf160",
+              "name": "topic",
+              "value": "={{ $('Process AI Classification').item.json.topic }}",
+              "type": "string"
+            },
+            {
+              "id": "c7be0070-1370-4d79-8931-0ead622b03a2",
+              "name": "startTime",
+              "value": "={{ $('Process AI Classification').item.json.startTime }}",
+              "type": "string"
+            },
+            {
+              "id": "7b96b679-ee4e-4a7a-8336-ac2a3cb4c9b9",
+              "name": "duration",
+              "value": "={{ $('Process AI Classification').item.json.duration }}",
+              "type": "string"
+            },
+            {
+              "id": "fe98e7fd-c8ad-4dee-9f1d-80194e6d49c7",
+              "name": "hostId",
+              "value": "={{ $('Process AI Classification').item.json.hostId }}",
+              "type": "string"
+            },
+            {
+              "id": "d867d0d9-7a82-4910-b164-5901ce5bf873",
+              "name": "callType",
+              "value": "={{ $('Process AI Classification').item.json.callType }}",
+              "type": "string"
+            },
+            {
+              "id": "25f7c257-deb6-458a-b0af-61aea7ee6685",
+              "name": "folderName",
+              "value": "={{ $('Process AI Classification').item.json.folderName }}",
+              "type": "string"
+            },
+            {
+              "id": "691d3b69-0569-4086-886e-9d42573b3485",
+              "name": "transcript",
+              "value": "={{ $('Process AI Classification').item.json.transcript }}",
+              "type": "string"
+            },
+            {
+              "id": "7a1eb2a2-3bde-4ce4-b883-dfbcd06c0038",
+              "name": "dateString",
+              "value": "={{ $('Process AI Classification').item.json.dateString }}",
+              "type": "string"
+            },
+            {
+              "id": "e6a54aa8-8bcf-49c9-956a-7deb9c7a6d9a",
+              "name": "timeString",
+              "value": "={{ $('Process AI Classification').item.json.timeString }}",
+              "type": "string"
+            },
+            {
+              "id": "27146768-f84b-4c24-a233-17bc24c7dead",
+              "name": "transcriptURL",
+              "value": "={{ $('Process AI Classification').item.json.transcriptUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "bdeb1a79-e73d-4124-b829-a1ec730273c0",
+              "name": "hostName",
+              "value": "={{ $('Process AI Classification').item.json.host.name }}",
+              "type": "string"
+            },
+            {
+              "id": "e342fc82-5b40-4b63-8c94-0b0feb4a27ac",
+              "name": "hostEmail",
+              "value": "={{ $('Process AI Classification').item.json.host.email }}",
+              "type": "string"
+            },
+            {
+              "id": "5f39b1ef-b162-4c00-8b78-91c51acfdd37",
+              "name": "airtableRecordId",
+              "value": "={{ $('Creator Video Record').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "3c00d8a3-a648-4374-a966-efdd611f590f",
+              "name": "googleFolderRootId",
+              "value": "={{ $('Get meeting record').item.json['Google Folder Root ID (from Brand)'][0] }}",
+              "type": "string"
+            },
+            {
+              "id": "16104b64-5041-4c9b-9cb1-9503127de2cd",
+              "name": "files",
+              "value": "={{ $('Process AI Classification').item.json.files }}",
+              "type": "array"
+            },
+            {
+              "id": "6bea0774-7d62-41d0-aafd-b82446ac1e5b",
+              "name": "contacts",
+              "value": "={{ $('Process AI Classification').item.json.contacts }}",
+              "type": "array"
+            },
+            {
+              "id": "82cd60af-209a-4284-bf18-cee890bd151e",
+              "name": "participants",
+              "value": "={{ $('Get Participants').item.json.participants }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        128
+      ],
+      "id": "f385e6a2-9618-4867-86df-df7444ce9e42",
+      "name": "Set Meeting Variables"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "=LATEST TEST [MID{{ $('Get meeting record').item.json.AUTO_ID }}] {{ $('Get meeting record').item.json.Description }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.googleFolderRootId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1344,
+        128
+      ],
+      "id": "262f7355-7562-4d2c-a2bf-eb3f9d83ae85",
+      "name": "Create Content Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "rqOZTBH7PEf8E73a",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "folderId": "={{ $('Create Content Folder').item.json.id }}",
+        "title": "=TranscriptText_{{ $('Set Meeting Variables').item.json.topic }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        128
+      ],
+      "id": "291443ba-1df2-4e0e-98e9-bc7d943ac7fb",
+      "name": "Create Transcript Doc",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "G6iON3SaK1WrsMH3",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={Meeting Metadata}\nTitle: {{ $('Set Meeting Variables').item.json.topic }}\nMeeting Type: {{ $('Set Meeting Variables').item.json.callType }}\nHost: {{ $('Set Meeting Variables').item.json.hostName }}\nHost Email: {{ $('Set Meeting Variables').item.json.hostEmail }}\nAirtable Record ID: {{ $('Set Meeting Variables').item.json.airtableRecordId }}\nMeeting Date: {{ $('Set Meeting Variables').item.json.dateString }}\nMeeting UUID: {{ $('Set Meeting Variables').item.json.uuid }}\n{/Meeting Metadata}\n\n{Transcript}\n{{ $('Set Meeting Variables').item.json.transcript }}\n{/Transcript}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        128
+      ],
+      "id": "21e5d826-aa15-43d4-ad8d-0b162b9bf24a",
+      "name": "Update Transcript Document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "G6iON3SaK1WrsMH3",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $('Download Transcriptions Files').item.json.data }}",
+        "name": "=transcript_{{ $('Set Meeting Variables').item.json.topic }}.vtt",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Create Content Folder').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1536,
+        128
+      ],
+      "name": "Upload VTT to Google Drive",
+      "id": "0bcc48b0-4d4f-4acf-89b7-04416ccd2cc6",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "rqOZTBH7PEf8E73a",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process ALL meetings and their video files\nconst allUploadRequests = [];\n\nfor (let i = 0; i < $input.all().length; i++) {\n  // Get the meeting data for this specific item\n  const meetingData = $('Set Meeting Variables').all()[i].json;\n  const folderId = $('Create Content Folder').all()[i].json.id;\n  \n  // Get video files from meeting data (exclude transcript)\n  const videoFiles = meetingData.files.filter(file => \n    file.recordingType !== 'audio_transcript'\n  );\n  \n  // Create upload requests for each video file in this meeting\n  videoFiles.forEach((file, fileIndex) => {\n    allUploadRequests.push({\n      json: {\n        fileName: file.fileName,\n        downloadUrl: file.downloadUrl,\n        folderId: folderId,\n        recordingType: file.recordingType,\n        fileSize: file.fileSize,\n        meetingIndex: i,\n        fileIndex: fileIndex,\n        totalFilesInMeeting: videoFiles.length,\n        \n        // Include all the meeting data that might be needed downstream\n        meetingId: meetingData.meetingId,\n        uuid: meetingData.uuid,\n        topic: meetingData.topic,\n        dateString: meetingData.dateString,\n        timeString: meetingData.timeString,\n        airtableRecordId: meetingData.airtableRecordId\n      }\n    });\n  });\n}\n\nreturn allUploadRequests;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        128
+      ],
+      "name": "Prepare Video Downloads",
+      "id": "a107d602-8deb-405b-ae1a-25a253e35622"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.downloadUrl }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "zoomOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 600000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2336,
+        128
+      ],
+      "name": "Download Videos",
+      "id": "4d1df2b0-6ca1-4fce-a1b1-2ffb7b860678",
+      "retryOnFail": true,
+      "credentials": {
+        "zoomOAuth2Api": {
+          "id": "h0Cgs2xoPfOYKzbp",
+          "name": "Zoom account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "={{ $json.airtableBase }}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $json.airtableTable }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Transcript URL": "=https://docs.google.com/document/d/{{ $json.transcriptDocId }}",
+            "id": "={{ $json.airtableRecordId }}",
+            "Clip Width": "={{ $json.clipWidth }}",
+            "Clip Height": "={{ $json.clipHeight }}",
+            "Video Width": "={{ $json.videoWidth }}",
+            "Video Height": "={{ $json.videoHeight }}",
+            "Duration": "={{ $json.videoDuration }}",
+            "Folder URL": "=https://drive.google.com/drive/u/1/folders/{{ $json.folderId }}",
+            "SRT URL": "=https://docs.google.com/document/d/{{ $json.vttFileId }}",
+            "Shared screen w/ speaker video gdrive id": "={{ $json.sharedScreenWithSpeakerViewFileId }}",
+            "active-speaker video gdrive id": "={{ $json.activeSpeakerFileId }}",
+            "shared-screen video gdrive id": "={{ $json.sharedScreenFileId }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "AUTO_ID",
+              "displayName": "AUTO_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Actions",
+              "displayName": "Actions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Brand",
+              "displayName": "Brand",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Shared screen w/ speaker video gdrive id",
+              "displayName": "Shared screen w/ speaker video gdrive id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "SRT URL",
+              "displayName": "SRT URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Transcript URL",
+              "displayName": "Transcript URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video Width",
+              "displayName": "Video Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video Height",
+              "displayName": "Video Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Clip Width",
+              "displayName": "Clip Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Clip Height",
+              "displayName": "Clip Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video Clips",
+              "displayName": "Video Clips",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Duration",
+              "displayName": "Duration",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Segments URL",
+              "displayName": "Segments URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Video Aspect Ratio",
+              "displayName": "Video Aspect Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Clip Aspect Ratio",
+              "displayName": "Clip Aspect Ratio",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "SRT",
+              "displayName": "SRT",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Logs",
+              "displayName": "Logs",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "AUTO_ID (from Actions)",
+              "displayName": "AUTO_ID (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Webhook URL (from Actions)",
+              "displayName": "Webhook URL (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Callback/Update Webhook URL (from Actions)",
+              "displayName": "Callback/Update Webhook URL (from Actions)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Record ID (from Brand)",
+              "displayName": "Record ID (from Brand)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Content",
+              "displayName": "Content",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Job ID",
+              "displayName": "Last Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Meeting Type",
+              "displayName": "Meeting Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Solo",
+                  "value": "Solo"
+                },
+                {
+                  "name": "Podcast",
+                  "value": "Podcast"
+                },
+                {
+                  "name": "SOLO",
+                  "value": "SOLO"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Start",
+              "displayName": "Start",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Meeting ID",
+              "displayName": "Meeting ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Google Folder Root ID (from Brand)",
+              "displayName": "Google Folder Root ID (from Brand)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Doc ID",
+              "displayName": "Doc ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "All Videos URL",
+              "displayName": "All Videos URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "VIdeo Type",
+              "displayName": "VIdeo Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Solo",
+                  "value": "Solo"
+                },
+                {
+                  "name": "Podcast",
+                  "value": "Podcast"
+                },
+                {
+                  "name": "Demo",
+                  "value": "Demo"
+                },
+                {
+                  "name": "Sales",
+                  "value": "Sales"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder URL",
+              "displayName": "Folder URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Folder ID",
+              "displayName": "Folder ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "active-speaker video gdrive id",
+              "displayName": "active-speaker video gdrive id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "shared-screen video gdrive id",
+              "displayName": "shared-screen video gdrive id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        3056,
+        128
+      ],
+      "name": "Update Airtable Record",
+      "id": "1175d21d-4c65-4e4d-ab46-fd572d9ac873",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─────────────────────────────────────────────────────────────\n// Aggregate Results – build complete video file ID list per meeting\n// ─────────────────────────────────────────────────────────────\nconst results = [];\n\n// Upstream data\nconst allVideoUploads   = $('Upload Videos to Google Drive').all();\nconst allVttUploads     = $('Upload VTT to Google Drive').all();\nconst allMeetingVars    = $('Set Meeting Variables').all();\nconst allFolderData     = $('Create Content Folder').all();\nconst allTranscriptDocs = $('Create Transcript Doc').all();\n\n// Priority for selecting main video\nconst PRIORITY = [\n  'shared-screen-with-speaker-view',   // screenshare + active-speaker\n  'shared-screen',\n  'active-speaker',\n  'gallery-view'\n];\n\nfor (let i = 0; i < allMeetingVars.length; i++) {\n  const mVars  = allMeetingVars[i]?.json;\n  const folder = allFolderData[i]?.json;\n  const doc    = allTranscriptDocs[i]?.json;\n  const vtt    = allVttUploads[i]?.json;\n  \n  if (!mVars || !folder || !doc || !vtt) continue;   // skip if anything missing\n\n  /** ░░ Gather every Drive upload that belongs to this meeting ░░ **/\n  const folderId = folder.id;\n  let vids = allVideoUploads.filter(u => u.json?.parents?.includes(folderId));\n  \n  if (!vids.length) {                          // fallback to timestamp match\n    const stamp = `${mVars.dateString}_${mVars.timeString}`;\n    vids = allVideoUploads.filter(u => u.json?.name?.includes(stamp));\n  }\n\n  /** ░░ Build File ID collections ░░ **/\n  const grouped = {};          // { recordingType: [fileId, …] }\n  const flat    = [];          // all file IDs (handy for Airtable)\n  let mainFileId = '';\n\n  vids.forEach(u => {\n    if (!u.json?.id) return;   // skip if no file ID\n    \n    // filename: <fileName>_uuid_<uuid>\n    let base = u.json.name.split('_uuid_')[0] || u.json.name;\n    base     = base.replace(/\\.[^/.]+$/, '');           // strip extension\n    const recType = base.replace(/_/g, '-').toLowerCase();\n    const fileId = u.json.id;   // Just use the file ID directly\n    \n    if (!grouped[recType]) grouped[recType] = [];\n    grouped[recType].push(fileId);\n    flat.push(fileId);\n  });\n\n  // choose main video file ID by priority\n  for (const p of PRIORITY) {\n    if (grouped[p]?.length) { mainFileId = grouped[p][0]; break; }\n  }\n  if (!mainFileId && flat.length) mainFileId = flat[0];       // final fallback\n\n  /** ░░ Extract individual video file IDs by finding matching keys ░░ **/\n  let sharedScreenWithSpeakerViewFileId = '';\n  let sharedScreenFileId = '';\n  let activeSpeakerFileId = '';\n  let galleryViewFileId = '';\n\n  // Find the actual keys in grouped that match our recording types\n  Object.keys(grouped).forEach(key => {\n    if (key.startsWith('shared-screen-with-speaker-view')) {\n      sharedScreenWithSpeakerViewFileId = grouped[key][0] || '';\n    } else if (key.startsWith('shared-screen') && !key.includes('speaker-view')) {\n      sharedScreenFileId = grouped[key][0] || '';\n    } else if (key.startsWith('active-speaker')) {\n      activeSpeakerFileId = grouped[key][0] || '';\n    } else if (key.startsWith('gallery-view')) {\n      galleryViewFileId = grouped[key][0] || '';\n    }\n  });\n\n  /** ░░ Output ░░ **/\n  results.push({\n    json: {\n      airtableRecordId : mVars.airtableRecordId,\n      airtableBase     : 'appS7qip5wnjgQwKL',\n      airtableTable    : 'tblg75MyQZREAqUKk',\n      folderId        : folderId,\n      folderUrl       : folder.webViewLink,\n      transcriptDocId : doc.id,\n      vttFileId       : vtt.id,\n      mainVideoFileId : mainFileId,\n      \n      // Individual video file IDs for each recording type\n      sharedScreenWithSpeakerViewFileId,\n      sharedScreenFileId,\n      activeSpeakerFileId,\n      galleryViewFileId,\n      \n      videoWidth   : 1920,\n      videoHeight  : 1080,\n      videoDuration: mVars.duration * 60,\n      clipWidth  : 1080,\n      clipHeight : 1920,\n      uploadStatus        : `${vids.length} file(s) uploaded to Google Drive`,\n      allUploadsSuccessful: vids.every(v => v.json?.id),\n      meetingUuid : mVars.uuid,\n      meetingId   : mVars.meetingId,\n      topic       : mVars.topic\n    }\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2816,
+        128
+      ],
+      "name": "Aggregate Results",
+      "id": "277212b9-63d0-4a7b-af7f-c0d4196fd579"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}_uuid_{{ $json.uuid }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.folderId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2576,
+        128
+      ],
+      "name": "Upload Videos to Google Drive",
+      "id": "10f32869-f3c8-4a22-b62d-58bbc07c1909",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "rqOZTBH7PEf8E73a",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appS7qip5wnjgQwKL",
+          "mode": "list",
+          "cachedResultName": "[ME] Everyday Creator DB [v1.1]",
+          "cachedResultUrl": "https://airtable.com/appS7qip5wnjgQwKL"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblg75MyQZREAqUKk",
+          "mode": "list",
+          "cachedResultName": "Videos",
+          "cachedResultUrl": "https://airtable.com/appS7qip5wnjgQwKL/tblg75MyQZREAqUKk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        -384
+      ],
+      "id": "92d9dd77-02a5-4425-a5c2-10da06e3c32b",
+      "name": "Search records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Create Document Metadata Table": {
+      "main": [
+        [
+          {
+            "node": "Create Document Rows Table (for Tabular Data)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Documents Table and Match Function": {
+      "main": [
+        [
+          {
+            "node": "Create Document Metadata Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recordings by Date": {
+      "main": [
+        [
+          {
+            "node": "Split Meetings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Meetings": {
+      "main": [
+        [
+          {
+            "node": "Package Meeting Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Date Range": {
+      "main": [
+        [
+          {
+            "node": "Get Recordings by Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Classify Call Type",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Classify Call Type": {
+      "main": [
+        [
+          {
+            "node": "Process AI Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Package Meeting Data": {
+      "main": [
+        [
+          {
+            "node": "Get Participants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Participants": {
+      "main": [
+        [
+          {
+            "node": "Download Transcriptions Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Transcriptions Files": {
+      "main": [
+        [
+          {
+            "node": "Text Convert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Convert": {
+      "main": [
+        [
+          {
+            "node": "AI Classify Call Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process AI Classification": {
+      "main": [
+        [
+          {
+            "node": "Creator Video Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creator Video Record": {
+      "main": [
+        [
+          {
+            "node": "Get meeting record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get meeting record": {
+      "main": [
+        [
+          {
+            "node": "Set Meeting Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Meeting Variables": {
+      "main": [
+        [
+          {
+            "node": "Create Content Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Content Folder": {
+      "main": [
+        [
+          {
+            "node": "Upload VTT to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Transcript Doc": {
+      "main": [
+        [
+          {
+            "node": "Update Transcript Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Transcript Document": {
+      "main": [
+        [
+          {
+            "node": "Prepare Video Downloads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload VTT to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Create Transcript Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Video Downloads": {
+      "main": [
+        [
+          {
+            "node": "Download Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Videos": {
+      "main": [
+        [
+          {
+            "node": "Upload Videos to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Videos to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "Prepare Date Range",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "01fe2a80-0b4f-4eb1-a5a0-308dfc640fec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6feeec6266ce5c242c41c4306324474e994ecb1129cd2b23d76b6746965b634"
+  },
+  "id": "dlvqwTYmsKQ95Ugn",
+  "tags": []
+}

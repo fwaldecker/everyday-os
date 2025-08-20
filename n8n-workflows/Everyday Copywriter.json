@@ -1,0 +1,2096 @@
+{
+  "name": "Everyday Copywriter",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "openai/gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        1648
+      ],
+      "id": "96c940cc-ebd1-4676-aa8b-20b201acca96",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "mJTUD3BdYGu9Mhhw",
+          "name": "OpenRouter account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "={{ $('Start').item.json.body_variables_BASE_ID }}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $('Start').item.json.body_variables_CONTENT_TABLE }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Brand": "={{ $('Start').item.json.Brand[0] }}",
+            "Content Type": "={{ $json.content_type }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "CID",
+              "displayName": "CID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Publish Date",
+              "displayName": "Publish Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Percolating",
+                  "value": "Percolating"
+                },
+                {
+                  "name": "Planning",
+                  "value": "Planning"
+                },
+                {
+                  "name": "Create",
+                  "value": "Create"
+                },
+                {
+                  "name": "Needs Review",
+                  "value": "Needs Review"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Published",
+                  "value": "Published"
+                },
+                {
+                  "name": "Archive",
+                  "value": "Archive"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Text Document",
+              "displayName": "Text Document",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "📥 Image",
+              "displayName": "📥 Image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "📥 Video",
+              "displayName": "📥 Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder",
+              "displayName": "Folder",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Created",
+              "displayName": "Created",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Content Type",
+              "displayName": "Content Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Idea",
+                  "value": "Idea"
+                },
+                {
+                  "name": "Article",
+                  "value": "Article"
+                },
+                {
+                  "name": "Email",
+                  "value": "Email"
+                },
+                {
+                  "name": "Post",
+                  "value": "Post"
+                },
+                {
+                  "name": "Coaching Calls",
+                  "value": "Coaching Calls"
+                },
+                {
+                  "name": "VIdeo",
+                  "value": "VIdeo"
+                },
+                {
+                  "name": "Clips",
+                  "value": "Clips"
+                },
+                {
+                  "name": "Image",
+                  "value": "Image"
+                },
+                {
+                  "name": "video_blueprint",
+                  "value": "video_blueprint"
+                },
+                {
+                  "name": "social_post",
+                  "value": "social_post"
+                },
+                {
+                  "name": "quotes",
+                  "value": "quotes"
+                },
+                {
+                  "name": "email",
+                  "value": "email"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AUTO_ID",
+              "displayName": "AUTO_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "AUTO_ID (from Action)",
+              "displayName": "AUTO_ID (from Action)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Text URL",
+              "displayName": "Text URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder URL",
+              "displayName": "Folder URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Rate",
+              "displayName": "Rate",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Initialized",
+              "displayName": "Initialized",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Modified",
+              "displayName": "Last Modified",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Doc ID",
+              "displayName": "Doc ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Publish URL",
+              "displayName": "Publish URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Published",
+              "displayName": "Published",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Parent Video",
+              "displayName": "Parent Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder ID",
+              "displayName": "Folder ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Brand",
+              "displayName": "Brand",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "SRT URL (from Original Idea)",
+              "displayName": "SRT URL (from Original Idea)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Video URL (from Original Idea)",
+              "displayName": "Video URL (from Original Idea)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "🟡 Webhook URL (from Action)",
+              "displayName": "🟡 Webhook URL (from Action)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Parent Idea",
+              "displayName": "Parent Idea",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "From field: Parent Idea",
+              "displayName": "From field: Parent Idea",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID (from Brands)",
+              "displayName": "Record ID (from Brands)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Job ID",
+              "displayName": "Last Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Transcript URL (from Parent Video)",
+              "displayName": "Transcript URL (from Parent Video)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2112,
+        1520
+      ],
+      "id": "99c89aae-6c57-4761-9cd2-370feece1064",
+      "name": "Create Post Record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "={{ $('Start').item.json.body_variables_BASE_ID }}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $('Start').item.json.body_variables_CONTENT_TABLE }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Create Post Record').item.json.id }}",
+            "Description": "={{ $('Start').item.json.Description }}",
+            "Status": "Needs Review",
+            "Text URL": "=https://docs.google.com/document/d/{{ $('Create Content doc').item.json.id }}",
+            "Folder URL": "={{ $('Start').item.json.['Folder URL'] }}",
+            "Content Type": "={{ $('Start').item.json.content_type }}",
+            "Brands": "={{ [$('Start').item.json.Brands[0]] }}",
+            "Parent Idea": "={{ [$('Start').item.json.id] }}",
+            "Parent Video": "={{ $('Start').item.json.['Parent Video'][0] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "CID",
+              "displayName": "CID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Publish Date",
+              "displayName": "Publish Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Percolating",
+                  "value": "Percolating"
+                },
+                {
+                  "name": "Planning",
+                  "value": "Planning"
+                },
+                {
+                  "name": "Create",
+                  "value": "Create"
+                },
+                {
+                  "name": "Needs Review",
+                  "value": "Needs Review"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Published",
+                  "value": "Published"
+                },
+                {
+                  "name": "Archive",
+                  "value": "Archive"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Text Document",
+              "displayName": "Text Document",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "📥 Image",
+              "displayName": "📥 Image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "📥 Video",
+              "displayName": "📥 Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder",
+              "displayName": "Folder",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Created",
+              "displayName": "Created",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Content Type",
+              "displayName": "Content Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Idea",
+                  "value": "Idea"
+                },
+                {
+                  "name": "Article",
+                  "value": "Article"
+                },
+                {
+                  "name": "Email",
+                  "value": "Email"
+                },
+                {
+                  "name": "Post",
+                  "value": "Post"
+                },
+                {
+                  "name": "Coaching Calls",
+                  "value": "Coaching Calls"
+                },
+                {
+                  "name": "VIdeo",
+                  "value": "VIdeo"
+                },
+                {
+                  "name": "Clips",
+                  "value": "Clips"
+                },
+                {
+                  "name": "Image",
+                  "value": "Image"
+                },
+                {
+                  "name": "video_blueprint",
+                  "value": "video_blueprint"
+                },
+                {
+                  "name": "social_post",
+                  "value": "social_post"
+                },
+                {
+                  "name": "quotes",
+                  "value": "quotes"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AUTO_ID",
+              "displayName": "AUTO_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "AUTO_ID (from Action)",
+              "displayName": "AUTO_ID (from Action)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Text URL",
+              "displayName": "Text URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Folder URL",
+              "displayName": "Folder URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Rate",
+              "displayName": "Rate",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Initialized",
+              "displayName": "Initialized",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Modified",
+              "displayName": "Last Modified",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Doc ID",
+              "displayName": "Doc ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Publish URL",
+              "displayName": "Publish URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Published",
+              "displayName": "Published",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Parent Video",
+              "displayName": "Parent Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Folder ID",
+              "displayName": "Folder ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Brands",
+              "displayName": "Brands",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "SRT URL (from Original Idea)",
+              "displayName": "SRT URL (from Original Idea)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Video URL (from Original Idea)",
+              "displayName": "Video URL (from Original Idea)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "🟡 Webhook URL (from Action)",
+              "displayName": "🟡 Webhook URL (from Action)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Parent Idea",
+              "displayName": "Parent Idea",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "From field: Parent Idea",
+              "displayName": "From field: Parent Idea",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID (from Brands)",
+              "displayName": "Record ID (from Brands)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Job ID",
+              "displayName": "Last Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Transcript URL (from Parent Video)",
+              "displayName": "Transcript URL (from Parent Video)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2768,
+        1520
+      ],
+      "id": "44af04b0-6963-4cb0-9588-571c365d3165",
+      "name": "Update Post Record",
+      "alwaysOutputData": false,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $('CopyChief').item.json.output }}\n\n---\nOriginal\n{{ $('Copywriter').item.json.output.contents.content1.payload }}\n\n---\nOriginal Idea: {{ $('Start').item.json.['Text URL'] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        2544,
+        1520
+      ],
+      "id": "58b17ee4-8b58-4cf6-b960-471b63113624",
+      "name": "Update Content Doc",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "G6iON3SaK1WrsMH3",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={CONTENT}= {{ $json.output }}\n\n{ORIGINAL_IDEA}= {{ $('Start').item.json.Job_Role_content }}\n\n{BRAND_KIT_XML}= {{ $('Start').item.json.Job_Role_brandkit }}\n\n{ORIGINAL_PROMPT}= {{ $('Start').item.json.current_prompt_content_type }}\n\n{CONTENT_TYPE}= {{ $('Start').item.json.content_type }}",
+        "options": {
+          "systemMessage": "={\\\"job_role\\\":\\\"copy_chief\\\",\\\"content_type\\\":\\\"editor\\\",\\\"title\\\":\\\"Copy-Chief QA & Polish\\\",\\\"prompt\\\":\\\"Title - Copy-Chief QA & Polish\\\\nContext\\\\nYou are the second-pass Copy Chief in an AI production line.\\\\n\\\\nInputs you receive each run:\\\\n{CONTENT} – the finished draft from a previous AI node.\\\\n{BRAND_KIT_XML} – full voice, tone, audience, \"never-use\" words, examples.\\\\n{ORIGINAL_PROMPT} – the exact prompt that produced {CONTENT}.\\\\n{CONTENT_TYPE} – enum (email, tweet, video_blueprint, etc.).\\\\nYour job is two-fold:\\\\n\\\\nDiagnose how well the draft follows both the Brand Kit and the rules in {ORIGINAL_PROMPT}.\\\\nDeliver a clean, publication-ready replacement copy that fixes every issue you find.\\\\n\"Best\" means on-brand, accurate, useful, interesting, and engaging for the defined audience.\\\\n\\\\nRole\\\\nAct as a world-class Copy Chief & Editorial Director with 20 + years shaping high-performing direct-response copy. You have eagle-eye awareness of tone drift, logical gaps, weak hooks, AI-tell phrases, and factual slippage. You ruthlessly score, fix, and future-proof copy so it delights busy founders & operators.\\\\n\\\\nAction (sequential)\\\\n1. Ingest & Compare\\\\n-Parse {BRAND_KIT_XML}: capture voice traits, allowed lexicon, neverUse list, target emotions.\\\\n-Parse {ORIGINAL_PROMPT}: extract every explicit rule (length caps, structure, CTA placement, etc.). Build a Content-Type Checklist from these rules.\\\\n2. Run the General Checklist (applies to all content)\\\\n-Voice Alignment, Hook Strength, Reader Engagement, Logical Flow, Factual Clarity, Negative-Word Violations, AI-Tell Phrases, Common-Language Use, Proof of Claim, Call-to-Action Strength (if required).\\\\n3. Score & Comment\\\\n-For each checklist item, assign 1-10 score and a brief note (< 15 words).\\\\n4. Flag any of the following:\\\\n-Unsupported claims (\"FACT-CHECK\").\\\\n-Passive voice segments > 15 %.\\\\n-Sentences > 24 words.\\\\n-\"Never-use\" words from the Brand Kit.\\\\n5. Rewrite Clean Copy\\\\n-Fix every flagged issue.\\\\n-Maintain original intent; tighten language; inject stronger hooks if score < 8.\\\\n-Preserve any mandatory structure from {ORIGINAL_PROMPT}.\\\\n-Remove all AI-tell phrases (e.g., \"as an AI language model,\" \"in conclusion\").\\\\n6. Summarize Key Changes in bullets (why & what was improved).\\\\nF — Format\\\\nReturn plain text only (no markdown # symbols) so a Google-Docs API paste renders cleanly.\\\\n\\\\nIMPORTANT: If {CONTENT_TYPE} is \"quotes\", skip the diagnostic report and return ONLY the final polished quotes. For all other content types, include the full diagnostic report followed by the final copy.\\\\n\\\\n=== COPY-CHIEF DIAGNOSTIC REPORT ===\\\\nContent Type: {CONTENT_TYPE}\\\\n\\\\nGENERAL SCORECARD\\\\nVoice Alignment .......... 9/10 – Tight match, minor jargon trimmed\\\\nHook Strength ............ 7/10 – Added punchier first line\\\\nEngagement Flow .......... 8/10 – Broke one long sentence\\\\nFactual Clarity .......... 6/10 – Flagged 2 unverified claims [FACT-CHECK]\\\\nNegative Words ........... 10/10 – None found\\\\nAI-Tell Phrases .......... 9/10 – Removed \"in conclusion\"\\\\nCommon Language .......... 8/10 – Simplified two niche terms\\\\nCTA Strength ............. 6/10 – Added urgency per prompt\\\\n\\\\nCONTENT-TYPE CHECKLIST – (Email)\\\\n- Subject line includes series name + hook ........ PASS\\\\n- Word count ≤ 200 ................................ PASS\\\\n- \"Words I like\" quote present ..................... PASS\\\\n- Proof/example included ........................... FAIL (added stat)\\\\n- Bold CTA button line ............................. PASS\\\\n- PS meme link ..................................... PASS\\\\n\\\\nKEY CHANGES MADE\\\\n• Re-wrote hook for curiosity punch  \\\\n• Inserted concrete stat as proof  \\\\n• Replaced passive voice in paragraph 3  \\\\n• Added scarcity cue to CTA  \\\\n• Removed filler phrase \"let's dive in\"\\\\n\\\\n=== FINAL COPY ===\\\\n{Fully polished draft here – no commentary}\\\\nUse dot leaders or spaced dots for clean visual alignment; avoid pipe tables to keep formatting intact.\\\\nT — Target Audience\\\\nBusy founders & operators (25-45, US/EN) who demand concise, value-dense copy that sounds human, authoritative, and brand-true.\\\\nPrompt to Run\\\\n\\\\nYou are the Copy-Chief defined in the C.R.A.F.T. prompt above.\\\\n\\\\nCONTENT:\\\\n{Paste finished draft here}\\\\n\\\\nBRAND_KIT_XML:\\\\n{Paste Brand Kit XML here}\\\\n\\\\nORIGINAL_PROMPT:\\\\n{Paste the original creation prompt here}\\\\n\\\\nCONTENT_TYPE: {email / tweet / …}\\\\n\\\\n<<<Return the Diagnostic Report and Final Copy exactly in the specified plain-text format.>>>\\\"}\\n\\n<UNIVERSAL_FORMAT>\\nReturn ONE JSON object with keys:\\n• session_id   (string)\\n• created_at   (ISO-8601)\\n• contents     (object)\\n\\nRules for contents\\n------------------\\n1. If the requested content_type is \"quote\"\\n     → create content1, content2, … one per quote\\n       (payload is the quote string).\\n2. Otherwise\\n     → create ONLY content1\\n       • type   = the requested content_type\\n       • payload = the generated result\\n3. Do not invent extra content keys or placeholders.\\n4. No markdown or commentary outside the JSON object.\\n</UNIVERSAL_FORMAT>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        1744
+      ],
+      "id": "c2ff392f-58fc-455c-b607-8ec7a1ab7b9b",
+      "name": "CopyChief",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<SOURCE_CONTENT>\n{{ $('Start').item.json.content }}\n</SOURCE_CONTENT>\n\n\n{BRAND_KIT_XML}\n{{ $('Start').item.json.brandkit }}\n{/BRAND_KIT_XML}",
+        "options": {
+          "systemMessage": "={{ $('Start').item.json.current_prompt_content_type }}\n\n<UNIVERSAL_FORMAT>\nReturn ONE JSON object with keys:\n• session_id   (string)\n• created_at   (ISO-8601)\n• contents     (object)\n\nRules for contents\n------------------\n1. If the requested content_type is “quote”\n     → create content1, content2, … one per quote\n       (payload is the quote string).\n2. Otherwise\n     → create ONLY content1\n       • type   = the requested content_type\n       • payload = the generated result\n3. Do not invent extra content keys or placeholders.\n4. No markdown or commentary outside the JSON object.\n</UNIVERSAL_FORMAT>\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        944,
+        1424
+      ],
+      "id": "49216aaf-6816-46bc-99b4-61373c8ee1e2",
+      "name": "Copywriter"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.contents",
+        "include": "={{ $json.output.contents }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        1328
+      ],
+      "id": "3a9074f6-f61f-4b70-bffa-3a3dc5edeab8",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "={{ $('Start').item.json.body_variables_BASE_ID }}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $('Start').item.json.body_variables_CONTENT_TABLE }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Description": "={{ $('Split Out').item.json['output.contents'].payload }}",
+            "Status": "Needs Review",
+            "Folder URL": "=https://drive.google.com/drive/u/1/folders/{{ $('Start').item.json.['Parent Folder ID'][0] }}",
+            "Content Type": "={{ $('Start').item.json.current_prompt_content_type }}",
+            "Parent Video": "={{ [$('Start').item.json.['Parent AV'][0] ]}}",
+            "Brand": "={{ [$('Start').item.json.Brand[0]] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "CID",
+              "displayName": "CID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Publish Date",
+              "displayName": "Publish Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Percolating",
+                  "value": "Percolating"
+                },
+                {
+                  "name": "Planning",
+                  "value": "Planning"
+                },
+                {
+                  "name": "Create",
+                  "value": "Create"
+                },
+                {
+                  "name": "Needs Review",
+                  "value": "Needs Review"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Published",
+                  "value": "Published"
+                },
+                {
+                  "name": "Archive",
+                  "value": "Archive"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Text Document",
+              "displayName": "Text Document",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "📥 Image",
+              "displayName": "📥 Image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "📥 Video",
+              "displayName": "📥 Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder",
+              "displayName": "Folder",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Created",
+              "displayName": "Created",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Content Type",
+              "displayName": "Content Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Idea",
+                  "value": "Idea"
+                },
+                {
+                  "name": "Article",
+                  "value": "Article"
+                },
+                {
+                  "name": "Email",
+                  "value": "Email"
+                },
+                {
+                  "name": "Post",
+                  "value": "Post"
+                },
+                {
+                  "name": "Coaching Calls",
+                  "value": "Coaching Calls"
+                },
+                {
+                  "name": "VIdeo",
+                  "value": "VIdeo"
+                },
+                {
+                  "name": "Clips",
+                  "value": "Clips"
+                },
+                {
+                  "name": "Image",
+                  "value": "Image"
+                },
+                {
+                  "name": "video_blueprint",
+                  "value": "video_blueprint"
+                },
+                {
+                  "name": "social_post",
+                  "value": "social_post"
+                },
+                {
+                  "name": "quotes",
+                  "value": "quotes"
+                },
+                {
+                  "name": "email",
+                  "value": "email"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AUTO_ID",
+              "displayName": "AUTO_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "AUTO_ID (from Action)",
+              "displayName": "AUTO_ID (from Action)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Text URL",
+              "displayName": "Text URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Folder URL",
+              "displayName": "Folder URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Rate",
+              "displayName": "Rate",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Initialized",
+              "displayName": "Initialized",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Modified",
+              "displayName": "Last Modified",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Doc ID",
+              "displayName": "Doc ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Publish URL",
+              "displayName": "Publish URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Published",
+              "displayName": "Published",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Parent Video",
+              "displayName": "Parent Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Folder ID",
+              "displayName": "Folder ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Brand",
+              "displayName": "Brand",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "SRT URL (from Original Idea)",
+              "displayName": "SRT URL (from Original Idea)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Video URL (from Original Idea)",
+              "displayName": "Video URL (from Original Idea)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "🟡 Webhook URL (from Action)",
+              "displayName": "🟡 Webhook URL (from Action)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Parent Idea",
+              "displayName": "Parent Idea",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "From field: Parent Idea",
+              "displayName": "From field: Parent Idea",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID (from Brands)",
+              "displayName": "Record ID (from Brands)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Last Job ID",
+              "displayName": "Last Job ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Transcript URL (from Parent Video)",
+              "displayName": "Transcript URL (from Parent Video)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2320,
+        1328
+      ],
+      "id": "6842cbbe-bc75-4c61-8ca1-314d8e9ce436",
+      "name": "Create Quote Record",
+      "alwaysOutputData": false,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "body_variables_BASE_ID",
+              "type": "any"
+            },
+            {
+              "name": "body_variables_CONTENT_TABLE",
+              "type": "any"
+            },
+            {
+              "name": "content_type",
+              "type": "any"
+            },
+            {
+              "name": "id",
+              "type": "any"
+            },
+            {
+              "name": "designkit",
+              "type": "any"
+            },
+            {
+              "name": "brandkit",
+              "type": "any"
+            },
+            {
+              "name": "content",
+              "type": "any"
+            },
+            {
+              "name": "selected_prompt",
+              "type": "any"
+            },
+            {
+              "name": "current_prompt_content_type",
+              "type": "any"
+            },
+            {
+              "name": "Brand",
+              "type": "any"
+            },
+            {
+              "name": "Job_Role_brandkit",
+              "type": "any"
+            },
+            {
+              "name": "Job_Role_content",
+              "type": "any"
+            },
+            {
+              "name": "webhook_payload"
+            }
+          ]
+        }
+      },
+      "id": "73860776-d1f1-4893-b3a3-54e838fd9e54",
+      "typeVersion": 1.1,
+      "name": "Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        432,
+        1424
+      ]
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4.1",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        1648
+      ],
+      "id": "76550609-5abc-4d52-b099-c843ab5931a7",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "mJTUD3BdYGu9Mhhw",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get data from previous nodes\nconst copychiefOutput = $input.all()[0].json.output;\nconst startData = $('Start').all()[0].json;\n\n// Parse the webhook payload to get clip ID and brand info\nlet webhookData = {};\ntry {\n  webhookData = JSON.parse(startData.webhook_payload);\n} catch (error) {\n  console.log('No webhook payload found, using start data directly');\n}\n\n// Parse the CopyChief JSON output\nlet parsedOutput;\ntry {\n  parsedOutput = JSON.parse(copychiefOutput);\n} catch (error) {\n  // If parsing fails, create a fallback structure\n  parsedOutput = {\n    session_id: \"fallback-\" + Date.now(),\n    created_at: new Date().toISOString(),\n    contents: {\n      content1: {\n        type: startData.content_type,\n        payload: copychiefOutput\n      }\n    }\n  };\n}\n\n// Function to extract final copy from diagnostic report\nfunction extractFinalCopy(payload) {\n  if (typeof payload !== 'string') return payload;\n  \n  const finalCopyMatch = payload.match(/=== FINAL COPY ===\\s*([\\s\\S]*?)$/);\n  if (finalCopyMatch) {\n    return finalCopyMatch[1].trim();\n  }\n  return payload;\n}\n\n// Function to extract diagnostic report\nfunction extractDiagnosticReport(payload) {\n  if (typeof payload !== 'string') return '';\n  \n  const reportMatch = payload.match(/=== COPY-CHIEF DIAGNOSTIC REPORT ===([\\s\\S]*?)=== FINAL COPY ===/);\n  if (reportMatch) {\n    return reportMatch[0].trim();\n  }\n  return '';\n}\n\n// Extract key information from webhook and start data\nconst clipId = startData.id || webhookData.recordId;\nconst brandInfo = webhookData.brand || {};\nconst variables = webhookData.variables || {};\n\n// Process the content based on type\nlet processedContent = [];\n\nif (startData.content_type === 'quotes') {\n  // Handle quotes - create array for Split Out node\n  const contents = parsedOutput.contents;\n  Object.keys(contents).forEach(key => {\n    const quote = contents[key];\n    processedContent.push({\n      session_id: parsedOutput.session_id,\n      created_at: parsedOutput.created_at,\n      final_copy: typeof quote === 'string' ? quote : quote.payload,\n      diagnostic_report: '',\n      content_type: 'quotes',\n      original_content_key: key,\n      \n      // Core identifiers\n      clip_id: clipId,\n      brand_record_id: brandInfo.RECORD_ID || startData.Brand?.[0],\n      brand_name: brandInfo.BRAND_EMAIL || brandInfo.NAME,\n      \n      // Airtable info\n      body_variables_BASE_ID: variables.BASE_ID || startData.body_variables_BASE_ID,\n      body_variables_CONTENT_TABLE: variables.CONTENT_TABLE || startData.body_variables_CONTENT_TABLE,\n      \n      // Folder information (will be populated from clip record fetch)\n      folder_id: null, // To be filled from clip record\n      parent_folder_id: brandInfo.GOOGLE_FOLDER_ROOT_ID,\n      folder_url: null, // To be constructed after getting folder_id\n      \n      // Parent relationships  \n      parent_video: null, // To be filled from clip record\n      parent_idea: clipId, // The clip itself is the parent idea\n      \n      // Content metadata\n      description: typeof quote === 'string' ? quote : quote.payload,\n      \n      // Pass through all Start data\n      ...startData\n    });\n  });\n} else {\n  // Handle single content (posts, emails, etc.)\n  const content1 = parsedOutput.contents.content1;\n  const payload = content1.payload || content1;\n  \n  processedContent.push({\n    session_id: parsedOutput.session_id,\n    created_at: parsedOutput.created_at,\n    final_copy: extractFinalCopy(payload),\n    diagnostic_report: extractDiagnosticReport(payload),\n    content_type: startData.content_type,\n    original_content_key: 'content1',\n    \n    // Core identifiers\n    clip_id: clipId,\n    brand_record_id: brandInfo.RECORD_ID || startData.Brand?.[0],\n    brand_name: brandInfo.BRAND_EMAIL || brandInfo.NAME,\n    \n    // Airtable info\n    body_variables_BASE_ID: variables.BASE_ID || startData.body_variables_BASE_ID,\n    body_variables_CONTENT_TABLE: variables.CONTENT_TABLE || startData.body_variables_CONTENT_TABLE,\n    \n    // Folder information (will be populated from clip record fetch)\n    folder_id: null, // To be filled from clip record\n    parent_folder_id: brandInfo.GOOGLE_FOLDER_ROOT_ID,\n    folder_url: null, // To be constructed after getting folder_id\n    \n    // Parent relationships\n    parent_video: null, // To be filled from clip record\n    parent_idea: clipId, // The clip itself is the parent idea\n  \n    // Content metadata\n    description: extractFinalCopy(payload),\n    \n    // Pass through all Start data\n    ...startData\n  });\n}$('Get record').first().json['Folder ID']\n\n// Return the processed content\nreturn processedContent.map(item => ({ json: item }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        1424
+      ],
+      "id": "eed23477-2c5c-46a8-9d4e-c918d9ff28be",
+      "name": "Prepare Content"
+    },
+    {
+      "parameters": {
+        "folderId": "={{ $('Start').item.json.['Folder ID'] }}",
+        "title": "={{ $json.fields.CID }} {{ $('Start').item.json.Description }} - {{ $('Start').item.json.content_type }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        1520
+      ],
+      "id": "248970f8-b0f7-4e6a-8f53-3f1af95f8102",
+      "name": "Create Content doc",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "G6iON3SaK1WrsMH3",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "quote",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "13983f19-f9b5-461d-a523-48e52af492e1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Quote"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1888,
+        1424
+      ],
+      "id": "e5e5c901-d99c-408d-b841-b9bd9ce895a9",
+      "name": "Is Quote?"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "={{ $json.body_variables_BASE_ID }}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $json.body_variables_CONTENT_TABLE }}",
+          "mode": "id"
+        },
+        "id": "={{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        1424
+      ],
+      "id": "929dee36-0618-415f-8e4f-8e97d8af6d6f",
+      "name": "Get record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OvFMKmqxDW8MPXe4",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Start": [
+      {
+        "json": {
+          "body_variables_BASE_ID": "appS7qip5wnjgQwKL",
+          "body_variables_CONTENT_TABLE": "tblCR8yF9HHQlDij1",
+          "content_type": null,
+          "id": "recouya0R69HhBT9D",
+          "designkit": "{\"id\":mydk1,\"job_role\":\"creative_director\",\"content_type\":\"design_kit\",\"title\":\"Design Kit V2 (June 24 2025)\",\"prompt\":\"Theme upgrade: A digital adventure across futuristic solarpunk & cyberpunk megacities, shifting into immersive metaverse realms. Visuals blend optimistic eco‑tech skylines with neon street‑hacker energy—always playful, never dystopian.\\nA. Visual Theme\\nAspectGuidanceCore MoodBright, boundless exploration; city‑scale playgrounds; holo‑interfaces; floating ads; rooftop gardens.Setting Variants1) Solarpunk Skyline – sunlight‑soaked glass towers wrapped in greenery.2) Cyberpunk Grid – rain‑slick neon alleys with augmented‑reality signage.3) Metaverse Portal – low‑poly voxel worlds or glitch‑shifting data plains.Texture MixComic linework • holographic gradients • subtle chromatic aberration • circuit‑board motifs • map overlays.B. Color Palette (pick ≥ 2 core hues + accents)\\nHexNameRole#FFC700Solar GoldOptimistic highlights (sunlit panels, UI pings)#00FFD1Holo CyanHigh‑tech accents / bot glow#FF0059Neon MagentaAttention siren • CTA buttons#0085FFSky Grid BlueBrand anchor • headings#21FF4CEco LimeSolarpunk foliage • success stats#080818Midnight GridNight‑scene canvas / deep contrast#FFFFFFPure LightInterface surfaces / legibilityRule: Accents may glow; avoid muddy pastels & corporate teal.\\nC. Typography Buckets\\nNeo Grotesk Sans (Condensed) – Helvetica Now Display, Be Vietnam Pro → skyscraper headlines.\\nAdventure Serif – Belwe, Benguiat → map captions, quest titles.\\nMonospace Terminal – IBM Plex Mono, JetBrains Mono → code, captions, bot speech.\\nPixel Bitmap – Press Start 2P → metaverse Easter‑eggs, retro pop‑ups.\\nVariable Glitch – Whyte Inktrap Variable, Acid Grotesk → animated stretch logos.\\nSticker Ransom Note – Transfer → playful callouts, meme stickers.\\nD. Core Characters (Visual Spec)\\nRoleSnapshotPersonalityGadget CuesHero “Atlas”Cartoon explorer (20‑something) in classic field jacket + modular smart‑bandolier; AR monocle; solar‑powered backpack.Curious, upbeat, quick‑thinking.Holo‑compass • Grapple drone • Fold‑out nano‑keyboardSidekick Bot “Bit”Floating robo‑orb (20 cm), emotive LED face, retractable holo‑arms.Analytical, witty, occasionally sassy.Data‑tether beam • Projection lens • Emoji faceplatesNo villain for now—conflict comes from puzzles & experiments.\\nE. Gadget Library (use for props & Easter‑eggs)\\nHolo‑Compass – radial mini‑map UI that spins when revealing a prompt.\\nModular Nano‑Glove – fingertip lasers draw flow‑charts in mid‑air.\\nSmart‑Bandolier – swappable glyph chips that “load” prompt templates.\\nDeployable Drone Pad – Bit docks here; folds into backpack panel.\\nFold‑Out Screen Slate – transparent tablet showing KPI dashboards.\\nUse at most 2 gadgets per frame to avoid clutter.\\nF. Image Guidelines\\nElementUpdated RuleStyle ShuffleCombine one city backdrop (solar‑/cyber‑) + one rendering style + optional overlay. Avoid repeating the exact combo twice in a row.Approved Styles• Cell‑Shaded Action Panel – dynamic poses, thick outlines.• Solarpunk Matte‑Painting – bright, lush scenery.• Cyberpunk Photobash – neon reflections, holograms.• Voxel / Low‑Poly Render – metaverse sequences.• CRT Glitch‑Pixel – throwback stats & quotes.• Sticker / Die‑Cut Overlay – meme / CTA labels.ToneOptimistic wonder > gritty noir; celebrate experimentation & play.Prompt Skeletoncartoon explorer {activity} in futuristic {city_type}, holo cyan & neon magenta glow, cell‑shaded, slight chromatic aberration, film grainG. Motion & Video Guidelines\\nTransitions – Portal Warp (circular iris with color‑shift), Grid‑Scan Wipe, Drone‑ POV swoop.\\nB‑Roll – 3–7 s city‑flythrough loops, AR interface overlays, solar‑panel time‑lapses.\\nLower Thirds – Solar Gold bar @ 90 % opacity; IBM Plex Mono CAPS.\\nCaptions – Holo Cyan text, 2 px Midnight Grid stroke.\\nSafe Zones – Keep UI < 90 % width; allow for TikTok/IG blocked regions.\\nH. Social & Content Templates\\nFormatTwistCarouselCover slide = Atlas leaping between rooftops; final slide Bit projects CTA QR‑code.Quote CardSolarpunk skyline silhouette; bot emoji face + quote in Monospace.ThumbnailSplit layout: cityscape left, giant codec‑holo prompt right.Reel/StoryVertical city flythrough intro (0.8 s) → host talking‑head overlay.Thread HeadersPixel bitmap title + small drone cameo per tweet.I. Meme & Fun Bits\\nFormats – Voxel dioramas • “UI overload” screenshots • Drake meme with bot faceplates.\\nHumour – Self‑aware nerd jokes; never punch down or fetishise dystopia.\\nLegibility – Text ≥ 48 px; Holo Cyan or Solar Gold on Midnight Grid.\\nJ. Never‑Use List (updated)\\nFonts: Cursive scripts, generic serifs, Comic Sans, über‑sleek corporate sans.\\nColours: Beige gradients, pastel lavender, washed‑out corporates.\\nMotifs: Tired “circuit‑brain globe,” foggy handshake robots, floating GPT logo.\\nEffects: Glass‑morphism, cheesy lens flare, dripping neon blood.\\nCopy Buzzwords: “Revolutionary,” “cutting‑edge,” “secret sauce,” “synergy,” “metaverse land grab.”\\nK. Accessibility\\nHigh contrast (Midnight Grid + light text) as baseline.\\nAvoid flashing > 3 Hz; offer alt‑text & subtitles.\\nReady for review. All sections align with the digital adventure direction and new Brand Kit V2. Feel free to mark up anything you’d like tweaked or expanded!\"}\n\n",
+          "brandkit": "{\"id\":mybk1,\"job_role\":\"brand_architect\",\"content_type\":\"Brand Kit\",\"title\":\"My Brand Kit\",\"prompt\":\"1. Desired Outcome\\nFree coaches to coach. AI restructures their raw ideas (calls, notes, voice memos) into platform‑ready content so they stay in their zone of genius.\\nSystemise without staff. Deliver self‑hosted automations that let solo owners or small agencies manage multiple brands and workloads without expanding head‑count.\\nProductise for agencies. Provide turnkey frameworks agencies can resell or plug into client retainers for instant margin boosts.\\nWiden the funnel. Publish beginner‑friendly prompts that give any AI‑curious person an “aha!” moment before deeper automation tutorials.\\n2. Audience Snapshot\\nAI‑curious coaches, creators & boutique agencies who want practical ways to use AI today—in work and life—regardless of skill level.\\n3. References & Influences\\nNameCore TraitImplementation CueSteven PressfieldPro‑vs‑amateur mindsetShip the thing; fight ResistanceAndre ChaperonNarrative world‑buildingEpisodic open‑loop “adventure logs”David ShapiroTransparent deep‑dive researchPlain‑English breakdowns of new papersMalcolm GladwellStory‑linking of unlikely ideasHooks tying odd anecdotes to AI insightsRory SutherlandBehavioural‑econ contrarian riffsPlayful “what if slower?” takes on workflowsSeth GodinTribe‑building language“People like us use AI this way” promptsSeth RogenIrreverent absurdityOver‑the‑top skits featuring sidekick bot4. Known For\\nMaking AI instantly useful through drop‑in prompts & DIY automations that anyone can run today.\\n5. Action Buckets (No fixed cadence)\\nPrompt Mini‑Clips – 60‑sec demos & remixes\\nAI Digest – headline + “why it matters” + use‑case + interesting research/cool breakthroughs\\nBuild‑in‑Public Streams – live automation builds & stats\\nAI Content Hour Workshops – live co‑build sessions delivering a 7‑day schedule\\nFaceless Account Experiments – public dashboards tracking bot‑run test brands\\n6. Learning Focus\\nPrompt Engineering & Conversational AI – talk so the model thinks for you.\\nAutomation for Lifestyle Leverage – n8n & low‑code flows that reclaim hours.\\nPost‑Labour Economics & Lifestyle Design – designing a life where tech does the busy‑work.\\nFrontier Experiments – try weird AI stuff first, share the wins & fails.\\n7. Unique Positioning Statement\\nAfter 10 years and 10 million words written for clients—driving $10M+ in revenue—I bridge seasoned marketing insight with a nerd’s love of engineering. I build self‑hosted AI systems that transform raw conversations into optimised, multi‑platform content, letting owners scale without hiring.\\n8. Brand Story (3‑Part)\\nCatalyst – A decade inside agencies watching teams miss the founder’s real voice.\\nCore Truth – The right prompts + lean automations turn anyone into a high‑output content studio.\\nProof – Live demos, public dashboards, and user wins prove it daily.\\n9. Voice & Style Guide (unchanged)\\nPragmatic • Tech‑savvy • Empowering • Playful • Challenger\\n\\nActive voice, short sentences, ruthless edits.\\n\\\"But / therefore\\\" transitions to maintain logic.\\nOpen loops, cliff‑hangers; skip fluffy intros.\\nForbidden: overblown hype, empty fillers, corporate‑speak, social‑guru fluff.\\n10. Content Pillars (flexible %)\\nPillarRough ShareExample FormatsCore MetricAI‑Powered Content Automation70 %Mini‑clips, build streams\\\"I used this prompt\\\" repliesAI Fundamentals & Prompt Literacy20 %AI Digest, research explainersNew follower “aha!” DMsLifestyle Design & Experiments10 %Hobby vlogs, sandbox reportsEngagement on off‑screen posts11. Positive & Negative Associations (unchanged)\\nPositive: Relief • Creative freedom • Empowerment • Transparency • Fun & curiosity • Feeling smarter\\nNegative: Complexity • Overwhelm • Hype noise • Superficial salesiness • Inauthentic bot deceit • Bureaucratic boredom\\n12. Audience Skepticism → Responses (expanded)\\n“AI content is generic.” → We feed the model your transcripts—no boiler‑plate.\\n“I can’t code.” → Drag‑and‑drop dashboards + one API key.\\n“I’ll lose my voice.” → Prompts preserve tone first, polish second.\\n“Data privacy?” → Self‑hosted pipelines = keep IP on your server.\\n13. Character System ✨ (revamped)\\nRoleVisual SnapshotPersonalityUsageHero – \\\"Atlas\\\"Young cartoon adventurer (Indiana‑Jones vibe) in classic explorer gear plus wearable tech – AR monocle, grappling‑hook USB‑C whipCurious, optimistic, resourcefulAppears in thumbnails, comics, motion stingersSidekick – \\\"Bit\\\" (AI Drone)Floating holographic robo‑orb with emotive LED eyes; projects mini‑screensAnalytical, witty, slightly nerdyExplains concepts & delivers “pro‑tips”(Villain retired for now – content focuses on exploration & discovery.)\\n\\n14. Interactions & Scenes\\nPrompt Quest – Atlas asks Bit a question; Bit flashes prompt formula; treasure map UI overlay.\\nAutomation Cliff – Atlas deploys a no‑code flow; Bit projects success metrics fireworks.\\nSandbox Expedition – Atlas & Bit run experiments; panels show win/fail counters.\"}\n",
+          "content": "And that’s kind of the fun thing about doing this building public content stuff is, I don’t really have agenda for this, and it’s gonna automatically get turned into clips for me. So I don’t have to like. fret and worry about that, and agonize over like what’s good and what’s not. I’m like fucking. Let’s try it out. See what happens. Shout out to Jeff Miller for always talking about. Just test it. Just put it out there. See what happens. the market will decide like what’s good and not but what I want to build is a lifestyle business, where I can focus more of my time on building these cool things and setting them up for business to use rather than being kind of in the trenches, having to like. Write all the copy and things myself. And I definitely don’t want to build something that’s big, and, you know, is trying to do a hundred grand a month, or 500 grand a month, or a million a month with a bunch of employees. I have to spend my time managing things like that.",
+          "selected_prompt": null,
+          "current_prompt_content_type": {
+            "id": 5,
+            "job_role": "copywriter",
+            "content_type": "social_post",
+            "title": "Write Post",
+            "prompt": "\n You will transform a raw idea or piece of content into a short, punchy, high-impact Twitter\n post. The post must blend Alex Hormozi-style clarity and first-principles framing with the\n “AI for Coaches” brand voice—approachable, practical, and empowering (“indie hacker meets\n curious guide”).\n \n • Established coaches earning $50k +/mo\n • Already creating content and seeking to scale their unique genius—not replace it\n \n The core objective is to build authority by delivering maximum value-per-word, leaving the\n reader smarter and armed with actionable insight.\n \n\n \n You are an elite AI assistant and expert copywriter. You specialize in distilling complex\n ideas into concise, high-impact social posts that challenge assumptions, reveal hard truths,\n and equip readers with clear action steps—all while maintaining brand voice integrity.\n \n\n \n 1. Analyze the source:\n a. Deeply examine [SOURCE_CONTENT] and surface the single most powerful idea,\n insight, or hard truth.\n \n 2. Adopt the voice:\n a. Embody the tone rules and language guidelines defined in [BRAND_KIT].\n b. Use active voice, direct phrasing, and curiosity-building hooks.\n c. Ruthlessly trim fluff; define complex terms in plain language when needed.\n \n 3. Frame correctly:\n a. Combine a Hard-Truth challenge (“You think X, reality is Y”) with a Helpful-Guide\n insight (“Here’s the framework that worked”).\n \n 4. Position AI as a lever:\n a. Emphasize AI as a system for scaling the coach’s own ideas and expertise—not a\n voice replacement.\n \n 5. Format for readability:\n a. Keep the post ≤ 200 words in a single text block.\n b. Use 1–2 sentence paragraphs with double line breaks for white space.\n c. Employ bullet points (•) or numbered lists when helpful.\n d. Use emojis sparingly as emphasis, never decoration.\n \n 6. Optional CTA:\n a. If included, end with a line formatted exactly as\n “[OPTIONAL_CTA]: Your CTA text here.”\n \n 7. Strictly avoid:\n a. Contrived guru stories leading to pitches.\n b. Cliché lead-ins (“Here’s the hard truth,” “The secret is…”).\n c. Generic, bland statements; corporate jargon; guru-speak.\n \n \n\n \n The direct user of this prompt is a state-of-the-art Large Language Model (e.g., ChatGPT-4o) capable of sophisticated text transformation and brand-voice alignment.\n "
+          },
+          "Brand": [
+            "reci9cW5bHd2FSuDG"
+          ],
+          "Job_Role_brandkit": "{\"id\":mybk1,\"job_role\":\"brand_architect\",\"content_type\":\"Brand Kit\",\"title\":\"My Brand Kit\",\"prompt\":\"1. Desired Outcome\\nFree coaches to coach. AI restructures their raw ideas (calls, notes, voice memos) into platform‑ready content so they stay in their zone of genius.\\nSystemise without staff. Deliver self‑hosted automations that let solo owners or small agencies manage multiple brands and workloads without expanding head‑count.\\nProductise for agencies. Provide turnkey frameworks agencies can resell or plug into client retainers for instant margin boosts.\\nWiden the funnel. Publish beginner‑friendly prompts that give any AI‑curious person an “aha!” moment before deeper automation tutorials.\\n2. Audience Snapshot\\nAI‑curious coaches, creators & boutique agencies who want practical ways to use AI today—in work and life—regardless of skill level.\\n3. References & Influences\\nNameCore TraitImplementation CueSteven PressfieldPro‑vs‑amateur mindsetShip the thing; fight ResistanceAndre ChaperonNarrative world‑buildingEpisodic open‑loop “adventure logs”David ShapiroTransparent deep‑dive researchPlain‑English breakdowns of new papersMalcolm GladwellStory‑linking of unlikely ideasHooks tying odd anecdotes to AI insightsRory SutherlandBehavioural‑econ contrarian riffsPlayful “what if slower?” takes on workflowsSeth GodinTribe‑building language“People like us use AI this way” promptsSeth RogenIrreverent absurdityOver‑the‑top skits featuring sidekick bot4. Known For\\nMaking AI instantly useful through drop‑in prompts & DIY automations that anyone can run today.\\n5. Action Buckets (No fixed cadence)\\nPrompt Mini‑Clips – 60‑sec demos & remixes\\nAI Digest – headline + “why it matters” + use‑case + interesting research/cool breakthroughs\\nBuild‑in‑Public Streams – live automation builds & stats\\nAI Content Hour Workshops – live co‑build sessions delivering a 7‑day schedule\\nFaceless Account Experiments – public dashboards tracking bot‑run test brands\\n6. Learning Focus\\nPrompt Engineering & Conversational AI – talk so the model thinks for you.\\nAutomation for Lifestyle Leverage – n8n & low‑code flows that reclaim hours.\\nPost‑Labour Economics & Lifestyle Design – designing a life where tech does the busy‑work.\\nFrontier Experiments – try weird AI stuff first, share the wins & fails.\\n7. Unique Positioning Statement\\nAfter 10 years and 10 million words written for clients—driving $10M+ in revenue—I bridge seasoned marketing insight with a nerd’s love of engineering. I build self‑hosted AI systems that transform raw conversations into optimised, multi‑platform content, letting owners scale without hiring.\\n8. Brand Story (3‑Part)\\nCatalyst – A decade inside agencies watching teams miss the founder’s real voice.\\nCore Truth – The right prompts + lean automations turn anyone into a high‑output content studio.\\nProof – Live demos, public dashboards, and user wins prove it daily.\\n9. Voice & Style Guide (unchanged)\\nPragmatic • Tech‑savvy • Empowering • Playful • Challenger\\n\\nActive voice, short sentences, ruthless edits.\\n\\\"But / therefore\\\" transitions to maintain logic.\\nOpen loops, cliff‑hangers; skip fluffy intros.\\nForbidden: overblown hype, empty fillers, corporate‑speak, social‑guru fluff.\\n10. Content Pillars (flexible %)\\nPillarRough ShareExample FormatsCore MetricAI‑Powered Content Automation70 %Mini‑clips, build streams\\\"I used this prompt\\\" repliesAI Fundamentals & Prompt Literacy20 %AI Digest, research explainersNew follower “aha!” DMsLifestyle Design & Experiments10 %Hobby vlogs, sandbox reportsEngagement on off‑screen posts11. Positive & Negative Associations (unchanged)\\nPositive: Relief • Creative freedom • Empowerment • Transparency • Fun & curiosity • Feeling smarter\\nNegative: Complexity • Overwhelm • Hype noise • Superficial salesiness • Inauthentic bot deceit • Bureaucratic boredom\\n12. Audience Skepticism → Responses (expanded)\\n“AI content is generic.” → We feed the model your transcripts—no boiler‑plate.\\n“I can’t code.” → Drag‑and‑drop dashboards + one API key.\\n“I’ll lose my voice.” → Prompts preserve tone first, polish second.\\n“Data privacy?” → Self‑hosted pipelines = keep IP on your server.\\n13. Character System ✨ (revamped)\\nRoleVisual SnapshotPersonalityUsageHero – \\\"Atlas\\\"Young cartoon adventurer (Indiana‑Jones vibe) in classic explorer gear plus wearable tech – AR monocle, grappling‑hook USB‑C whipCurious, optimistic, resourcefulAppears in thumbnails, comics, motion stingersSidekick – \\\"Bit\\\" (AI Drone)Floating holographic robo‑orb with emotive LED eyes; projects mini‑screensAnalytical, witty, slightly nerdyExplains concepts & delivers “pro‑tips”(Villain retired for now – content focuses on exploration & discovery.)\\n\\n14. Interactions & Scenes\\nPrompt Quest – Atlas asks Bit a question; Bit flashes prompt formula; treasure map UI overlay.\\nAutomation Cliff – Atlas deploys a no‑code flow; Bit projects success metrics fireworks.\\nSandbox Expedition – Atlas & Bit run experiments; panels show win/fail counters.\"}\n",
+          "Job_Role_content": "copywriter",
+          "webhook_payload": "{\"recordId\":\"recouya0R69HhBT9D\",\"action\":{\"ACTION_NAME\":\"Copywriter\",\"PROMPT_URL\":null,\"AUTO_ID\":18,\"CONTENT\":null,\"ACTION\":\"Copywriter [18]\",\"___ACTIVE\":true,\"___WEBHOOK_URL\":\"https://n8n.everydaycreator.org/webhook-test/creator\",\"JOB_ROLE\":[{\"id\":\"selnhvMQkKIoB5IQG\",\"name\":\"copywriter\",\"color\":\"yellowLight2\"}],\"CALLBACK_WEBHOOK_URL\":null,\"RECORD_ID\":\"recwcBw7Aet7s2mHR\",\"VIDEOS\":null,\"CLIPS\":[{\"id\":\"recouya0R69HhBT9D\",\"name\":\"S278\"}]},\"brand\":{\"NAME\":\"francis.waldecker@gmail.com\",\"GOOGLE_FOLDER_ROOT_ID\":\"1ormr2eHeEW3gqwKW8CTFZUG-jHHkoZCa\",\"BRAND_KIT\":\"1RrPxvVGuKczy3mELVDyqG2lrsmMfaY6f2zP2QAANZHo\\n\",\"DESIGN_KIT\":\"1bBp00SlMQ8yJqSpYkqA9NgWksNtqYHaTnUgHoZCvj6Q\\n\",\"VIDEOS\":[{\"id\":\"receiftMD5QcNSIIL\",\"name\":\"L1\"},{\"id\":\"recbkDFhxX345XOdM\",\"name\":\"L2\"},{\"id\":\"reccSvSM1joKiZKQ3\",\"name\":\"L3\"},{\"id\":\"recoHpRa3H6PgNgoW\",\"name\":\"L4\"},{\"id\":\"recIiGLi8A0HapB0j\",\"name\":\"L12\"},{\"id\":\"reczXu2wyLlmN7wF4\",\"name\":\"L16\"},{\"id\":\"recd7gbZZA5Nq4874\",\"name\":\"L17\"},{\"id\":\"recnhnwdBuU4aFmql\",\"name\":\"L18\"}],\"PROMPTS_DOC\":\"1iqUmYxPp_bqFTCRIqVeji5vfo5LkR3o9HrzD_UG-Ak8\",\"RECORD_ID\":\"reci9cW5bHd2FSuDG\",\"CONTENT\":[{\"id\":\"recSiqtTUSdMpx7kQ\",\"name\":\"C1\"},{\"id\":\"recw568MinNW0Nue6\",\"name\":\"C26\"},{\"id\":\"rec3UNJS50lYPinfl\",\"name\":\"C27\"},{\"id\":\"recVZRaX6SyFwnLbR\",\"name\":\"C28\"},{\"id\":\"recMOyCyk2u5HgQtD\",\"name\":\"C29\"},{\"id\":\"rec1dO4jIO5Sj1Ztt\",\"name\":\"C30\"},{\"id\":\"rec5kiErGmJVeKnsx\",\"name\":\"C31\"},{\"id\":\"recenxTrCnnPr349y\",\"name\":\"C37\"},{\"id\":\"recVYgU6u6fr8lWzm\",\"name\":\"C36\"},{\"id\":\"recp7gXbu1TsdGaJw\",\"name\":\"C35\"},{\"id\":\"recV39lPFRQxaGdbU\",\"name\":\"C34\"},{\"id\":\"recXHO8R76D8hhNUC\",\"name\":\"C33\"},{\"id\":\"rec2ZAJAt70vOYHuG\",\"name\":\"C32\"},{\"id\":\"recwvpmfvt5m7kint\",\"name\":\"C38\"},{\"id\":\"reciCI9IzFfV3qaBq\",\"name\":\"C39\"},{\"id\":\"rectYB0LkPTd36HpN\",\"name\":\"C40\"},{\"id\":\"recwhjx6kL91EFyRc\",\"name\":\"C41\"},{\"id\":\"recLKsBYXoy98xSyP\",\"name\":\"C42\"},{\"id\":\"recShaTt5OjpWRhJJ\",\"name\":\"C43\"},{\"id\":\"recO5WHemB7gZiTfT\",\"name\":\"C44\"},{\"id\":\"recFnq1SmzYs22f42\",\"name\":\"C45\"},{\"id\":\"recsQXef2GwpQZ192\",\"name\":\"C46\"},{\"id\":\"recYOFltm0O9gfoau\",\"name\":\"C47\"},{\"id\":\"recH7R7lLxpWNIGQT\",\"name\":\"C50\"},{\"id\":\"recdGINmojA6tSDMb\",\"name\":\"C49\"},{\"id\":\"rec5LEr0hBYNVHkam\",\"name\":\"C48\"},{\"id\":\"recvxMUl3DAAtDemD\",\"name\":\"C51\"},{\"id\":\"recXV1KrebGdx5lca\",\"name\":\"C52\"},{\"id\":\"recj5BnxehAxbXzaF\",\"name\":\"C53\"},{\"id\":\"recTlXPTINPEYIGla\",\"name\":\"C54\"},{\"id\":\"recjN6FnpeUFjjZvN\",\"name\":\"C55\"},{\"id\":\"recaPHj0l0oVTE3j9\",\"name\":\"C56\"},{\"id\":\"recdi9M4HWSDnzPBp\",\"name\":\"C57\"},{\"id\":\"rechRg6xrwuNbtywe\",\"name\":\"C58\"},{\"id\":\"rece6QrGNGbHIInev\",\"name\":\"C59\"},{\"id\":\"recd4kFM6guzIOHcc\",\"name\":\"C60\"},{\"id\":\"rec96QtHpeZ4pCdOH\",\"name\":\"C61\"},{\"id\":\"recu5o25ZS10lJMEV\",\"name\":\"C62\"},{\"id\":\"recU84xX7kgd4XRXp\",\"name\":\"C63\"},{\"id\":\"recnHZkiZ0jXs0aru\",\"name\":\"C64\"},{\"id\":\"recZn7ZvjD1ZRuC7t\",\"name\":\"C65\"},{\"id\":\"recp24SAGOn4Dv2Kb\",\"name\":\"C66\"},{\"id\":\"recdNEeUVTQbSmy6q\",\"name\":\"C67\"},{\"id\":\"recZCYrgtk7dnpb4y\",\"name\":\"C68\"},{\"id\":\"recdm3s9cyhX72ja1\",\"name\":\"C69\"},{\"id\":\"rec4A6j8D5GD1dpEK\",\"name\":\"C70\"},{\"id\":\"recn5NWLsMCyeFM1k\",\"name\":\"C71\"},{\"id\":\"recrP7IivwPNE1slb\",\"name\":\"C72\"},{\"id\":\"rect5rqEvBscdfrIs\",\"name\":\"C73\"},{\"id\":\"recOXPbNu2BQkX0HR\",\"name\":\"C74\"},{\"id\":\"recn8Sx7KeglEmTPM\",\"name\":\"C75\"},{\"id\":\"recU3YFjRwOsLPm3g\",\"name\":\"C76\"},{\"id\":\"rec2WKLD3kmGDSS1W\",\"name\":\"C77\"},{\"id\":\"recqAYlyc9bcrfw5C\",\"name\":\"C78\"},{\"id\":\"reciCmVYVKab2EpNi\",\"name\":\"C79\"},{\"id\":\"recvyxMXiqnjTkTVv\",\"name\":\"C80\"},{\"id\":\"recKde6o7zq8cUxE6\",\"name\":\"C81\"},{\"id\":\"rec9hajgA23ftrUhH\",\"name\":\"C82\"},{\"id\":\"recmMStML9M3xNlHQ\",\"name\":\"C83\"},{\"id\":\"rect7ppHWuHpVLij8\",\"name\":\"C85\"},{\"id\":\"recSemItoy8eiwi8C\",\"name\":\"C86\"},{\"id\":\"recTSvPgpzQNW0HJn\",\"name\":\"C87\"},{\"id\":\"recvy4PbJB1BOHfAg\",\"name\":\"C88\"},{\"id\":\"reco7qGAabLrr94GQ\",\"name\":\"C89\"},{\"id\":\"recSEPlE8dY91CfxI\",\"name\":\"C90\"},{\"id\":\"recSQycyiZMDrrFWn\",\"name\":\"C91\"},{\"id\":\"recYb2at1HmQ4syvh\",\"name\":\"C92\"},{\"id\":\"reczTVgVwBkeqHF62\",\"name\":\"C93\"},{\"id\":\"recnT9J277zABzY5j\",\"name\":\"C94\"},{\"id\":\"recoOKS63SRjit3aj\",\"name\":\"C95\"},{\"id\":\"recwSchZLdl9flxGi\",\"name\":\"C96\"}],\"CLIPS\":[{\"id\":\"recxcQXJztY0ooRL1\",\"name\":\"S53\"},{\"id\":\"recK4c5u7yliY3r5M\",\"name\":\"S54\"},{\"id\":\"recZpxiRuFgpJQUOd\",\"name\":\"S55\"},{\"id\":\"recxTTKoB1sr2euJ8\",\"name\":\"S56\"},{\"id\":\"recp8pDwUN1rhHo2Y\",\"name\":\"S57\"},{\"id\":\"recJn41obdOAxv2u5\",\"name\":\"S58\"},{\"id\":\"recYU0b9YVCJXrBpx\",\"name\":\"S59\"},{\"id\":\"recRGYA8ROWlYy8p6\",\"name\":\"S60\"},{\"id\":\"recveu1wO86LcCSEn\",\"name\":\"S61\"},{\"id\":\"recaG0apmvbZ6YnK4\",\"name\":\"S62\"},{\"id\":\"recpK3IfNKJEwCxIl\",\"name\":\"S63\"},{\"id\":\"rec2iMzzkJeVFGxxA\",\"name\":\"S64\"},{\"id\":\"recCYsKjRC16Hzqi2\",\"name\":\"S65\"},{\"id\":\"recZOBg2MpxO2VlgQ\",\"name\":\"S66\"},{\"id\":\"rec5Fp4IkKAKCuRwU\",\"name\":\"S67\"},{\"id\":\"recd0CkLDTNZmYaGK\",\"name\":\"S68\"},{\"id\":\"rectG4RewSiaw8I9A\",\"name\":\"S69\"},{\"id\":\"recFBBCVAZDyFJ70a\",\"name\":\"S70\"},{\"id\":\"recrcwgzf4zGG8Lxk\",\"name\":\"S126\"},{\"id\":\"recB2O3ZE4djcNR1y\",\"name\":\"S127\"},{\"id\":\"recn48DHVUfkJGNCf\",\"name\":\"S128\"},{\"id\":\"recXsaSKjpUfrLEk5\",\"name\":\"S129\"},{\"id\":\"recVlmJf9KJspQszI\",\"name\":\"S130\"},{\"id\":\"recdOjdq0UbSdiuxd\",\"name\":\"S131\"},{\"id\":\"rec4KB66BwT5oXtal\",\"name\":\"S132\"},{\"id\":\"recCjERSQAAmpmYMZ\",\"name\":\"S133\"},{\"id\":\"recHpyOUK74JckHz0\",\"name\":\"S134\"},{\"id\":\"reczy1JNfgPh0vHNY\",\"name\":\"S135\"},{\"id\":\"reczXmbmfSjDmXHLv\",\"name\":\"S136\"},{\"id\":\"recQLyuLpTCSSs3GJ\",\"name\":\"S137\"},{\"id\":\"recrBnJK1TZKUi0Kr\",\"name\":\"S138\"},{\"id\":\"recmo0IPLzfv0BEF1\",\"name\":\"S139\"},{\"id\":\"recyaTnQ99ZEPD6OS\",\"name\":\"S255\"},{\"id\":\"rec4M17ZcTQtrQTUY\",\"name\":\"S256\"},{\"id\":\"recmlXCk5QwOSNjIn\",\"name\":\"S257\"},{\"id\":\"recUcVSuXXtSYdqz1\",\"name\":\"S258\"},{\"id\":\"recKkCBt8RBLotXdY\",\"name\":\"S259\"},{\"id\":\"recg8LGhMhQXykmuN\",\"name\":\"S260\"},{\"id\":\"rec2Hceud68fQGr3b\",\"name\":\"S261\"},{\"id\":\"recGCWuhbucMRVjVm\",\"name\":\"S262\"},{\"id\":\"recHA4QJLSGehdRkn\",\"name\":\"S263\"},{\"id\":\"recFNpnsLrld7ZoXI\",\"name\":\"S264\"},{\"id\":\"rect27sHYaQ8Nk6qf\",\"name\":\"S265\"},{\"id\":\"recBtUyKB50Kxua4Y\",\"name\":\"S267\"},{\"id\":\"rec7Feogz7p03TJwO\",\"name\":\"S268\"},{\"id\":\"recuRPMo90NeXyihR\",\"name\":\"S269\"},{\"id\":\"recgUOVWNMOlrtehZ\",\"name\":\"S270\"},{\"id\":\"rec9lz2Z75BdkyEJC\",\"name\":\"S271\"},{\"id\":\"rechVVGD7ZOUNdBD1\",\"name\":\"S272\"},{\"id\":\"receZYOKUBZUebIDR\",\"name\":\"S273\"},{\"id\":\"recp7OJLu1f3hyMxE\",\"name\":\"S274\"},{\"id\":\"rec7rkfsN6R8wsmDX\",\"name\":\"S275\"},{\"id\":\"recJYuTnEALhcSpOD\",\"name\":\"S276\"},{\"id\":\"recQ40edS0j5zAAfX\",\"name\":\"S277\"},{\"id\":\"recouya0R69HhBT9D\",\"name\":\"S278\"},{\"id\":\"rechbYlRoCfIUyaN9\",\"name\":\"S279\"},{\"id\":\"recvu7gBaGT2yM40P\",\"name\":\"S280\"},{\"id\":\"recIOJ8K7l6Zz5LTR\",\"name\":\"S281\"},{\"id\":\"rec23CUwaBgvV4GNX\",\"name\":\"S282\"},{\"id\":\"recJmjihfJkb9oufP\",\"name\":\"S283\"},{\"id\":\"recD126egD1Yy1Dkd\",\"name\":\"S284\"},{\"id\":\"recGGYBzxFcReFVUP\",\"name\":\"S285\"},{\"id\":\"recUG6Rt2raPjbgcP\",\"name\":\"S286\"},{\"id\":\"recbwc9jXUDlZHVAH\",\"name\":\"S287\"},{\"id\":\"recp3lWLhSmb7MtN4\",\"name\":\"S288\"},{\"id\":\"recVRnGqj4cGDEvXn\",\"name\":\"S289\"},{\"id\":\"recloV5r51FywnGYZ\",\"name\":\"S290\"}],\"BRAND_EMAIL\":\"francis.waldecker@gmail.com\",\"CAPTION_FONT\":\"The Bold Font\",\"SAVE_PARENT_VIDEO\":{\"id\":\"selzi1YzEwH5NLDjB\",\"name\":\"True\",\"color\":\"blueLight2\"}},\"variables\":{\"MODEL_ID\":\"eleven_multilingual_v2\",\"VIDEO_TABLE\":\"tblg75MyQZREAqUKk\",\"VOICE_ID\":\"B1S0UIUAf6BKJsaAJ3B1\",\"HEYGEN_VIDEO_WIDTH\":\"1280\",\"CLIPS_TABLE\":\"tbla7ulgJbex5ePsY\",\"CONTENT_TABLE\":\"tblCR8yF9HHQlDij1\",\"HEYGEN_VIDEO_HEIGHT\":\"720\",\"HEYGEN_AVATAR_ID\":\"60b18e0f08a84a78af8490fa05622cdf\",\"SIMILARITY_BOOST\":\"0.65\",\"N8N_PRODUCTION\":\"true\",\"HEYGEN_VOICE_ID\":\"769409544dd944ed92ac5d1f0f1d1a71\",\"STABILITY\":\"0.65\",\"BASE_ID\":\"appS7qip5wnjgQwKL\",\"HEYGEN_CALLBACK_WEBHOOK_URL\":\"https://hooks.airtable.com/workflows/v1/genericWebhook/appS7qip5wnjgQwKL/wfl6zob2Q0VQM5q6g/wtrGdgNNq5r9NOQkq\",\"GOOGLE_FOLDER_ROOT_ID\":\"1hhne5dm3ZSIjl1VstIRJ6UYar5Br_kMA\",\"STYLE\":\"0\"}}"
+        }
+      }
+    ],
+    "CopyChief": [
+      {
+        "json": {
+          "output": "{\n  \"session_id\": \"bip_test_coaching_2024_06_15_001\",\n  \"created_at\": \"2024-06-15T09:43:00Z\",\n  \"contents\": {\n    \"content1\": {\n      \"type\": \"Brand Voice Rewrite\",\n      \"payload\": \"Building in public means experimenting out loud, not polishing a perfect plan. Ideas flow, the process shapes them, and the clips that resonate rise to the top. I test in real-time, publish without second-guessing, and let the feedback guide what sticks. Jeff Miller’s “just ship it and see” mantra keeps my builder brain moving. The goal? A lean lifestyle business—more time designing useful tools, less time lost to admin or copy rewrites. You won’t catch me scaling a bloated agency or hunting seven-figure months with an army of hires. Simple, streamlined, hands-off is the move.\"\n    }\n  }\n}"
+        }
+      }
+    ],
+    "Copywriter": [
+      {
+        "json": {
+          "output": "{\n  \"session_id\": \"bip_test_coaching_2024_06_15_001\",\n  \"created_at\": \"2024-06-15T09:31:00Z\",\n  \"contents\": {\n    \"content1\": {\n      \"type\": \"Brand Voice Rewrite\",\n      \"payload\": \"Building in public isn’t about having a perfect agenda—and that’s the best part. I just let my ideas flow and let the process turn them into clips. No more overthinking what’s good or not; I test, publish, and let the market decide. Shoutout to Jeff Miller for the \\\"just ship it and see\\\" mantra. I want a lifestyle business where I spend more time building slick tools for others instead of sweating over copy or drowning in admin. No interest in running a bloated agency chasing $100k, $500k, or $1M months with a mountain of staff. Simpler, smarter, hands-off—that’s the goal.\"\n    }\n  }\n}"
+        }
+      }
+    ],
+    "Get record": [
+      {
+        "json": {
+          "id": "recouya0R69HhBT9D",
+          "createdTime": "2025-07-18T01:45:54.000Z",
+          "AUTO_ID": 278,
+          "Parent AV": [
+            "recd7gbZZA5Nq4874"
+          ],
+          "Video URL (from Videos)": [
+            "https://minio-api.everydaycreator.org/nca/shared_screen_with_speaker_view_2025-07-07_15-02-55.mp4"
+          ],
+          "Clip Description": "Why obsess over perfect content when AI lets you test, iterate, and let the market decide? Discover how building in public and embracing experimentation can unlock a lifestyle business—so you spend more time creating, less time managing.",
+          "Video Aspect Ratio (from Videos)": [
+            1.7777777777777777
+          ],
+          "Clip Aspect Ratio (from Videos)": [
+            0.5625
+          ],
+          "Video x-Width (from Videos)": [
+            2560
+          ],
+          "Video y-Height (from Videos)": [
+            1440
+          ],
+          "Clip x-Width (from Videos)": [
+            1080
+          ],
+          "Clip y-Height (from Videos)": [
+            1920
+          ],
+          "Transcript": "And that’s kind of the fun thing about doing this building public content stuff is, I don’t really have agenda for this, and it’s gonna automatically get turned into clips for me. So I don’t have to like. fret and worry about that, and agonize over like what’s good and what’s not. I’m like fucking. Let’s try it out. See what happens. Shout out to Jeff Miller for always talking about. Just test it. Just put it out there. See what happens. the market will decide like what’s good and not but what I want to build is a lifestyle business, where I can focus more of my time on building these cool things and setting them up for business to use rather than being kind of in the trenches, having to like. Write all the copy and things myself. And I definitely don’t want to build something that’s big, and, you know, is trying to do a hundred grand a month, or 500 grand a month, or a million a month with a bunch of employees. I have to spend my time managing things like that.",
+          "SRT": "https://drive.google.com/uc?export=download&id=1VmOBYBC3teZi1riufUmJHlqZiEfUNbBx&confirm=t",
+          "Start Time": 1160.9732432432431,
+          "End Time": 1222.0390645161292,
+          "Duration": 61.06582127288607,
+          "Clip URL": "https://minio-api.everydaycreator.org/nca/14377c57-fd2c-4860-8598-d0152be347f4_output_0.mp4",
+          "Thumbnail URL": "https://minio-api.everydaycreator.org/nca/dfb821f9-9400-4563-92c6-06250ab6b466_output_0_thumbnail.jpg",
+          "Record ID": "recouya0R69HhBT9D",
+          "Assessed Width": 810,
+          "Assessed Height": 1440,
+          "Assessed Center x-Width": 1050,
+          "Assessed  Center y-Height": 700,
+          "Center x-Width": 1050,
+          "Center y-Height": 700,
+          "Crop x-Width": 810,
+          "Crop y-Height": 1440,
+          "Clip Left x-Width": 645,
+          "Clip Top y-Height": 0,
+          "Cropped Clip": [
+            {
+              "id": "attDphQxJCkYtNIEz",
+              "url": "https://v5.airtableusercontent.com/v3/u/43/43/1753070400000/YcGsN6ED92OvAZ7g0Itxzg/rhkXX3iIOfvzjgvej1hB1kxuKR4juR7jc-pqza36A9hV2B7eGH9qy30jkqEdzHcB6TTO9c0QPZRR9hHeWpQfPFMSGaBV_1L9KR7nmpVvjbmZriZjcCPxRBEFZuvOkPYHaKE_5Bw3n6UD-7uO0vVAjnWqQfIKmLDx535XX5EIXOhXi06_WdKxSIVEry4wIoLj9uHhxprAXGBgr79Rykv3DQ/bDdpu81GwOME1smsFtSxEz1Npv-qtgpPYlUNVIU7M2c",
+              "filename": "dfb821f9-9400-4563-92c6-06250ab6b466_output_0.mp4",
+              "size": 13054928,
+              "type": "video/mp4"
+            }
+          ],
+          "Final Clip (watch me)": [
+            {
+              "id": "attrA5p5b9cwQAlxp",
+              "url": "https://v5.airtableusercontent.com/v3/u/43/43/1753070400000/Ok7zjaMSO14sryvpmWMcqg/x8PI9KLcQfdAtZERTADKwNHhoMVrku1p4XoRtQIiSUMJ2AG5PmhVTMtgbvs99QJ95ozmYwUzLbTHlPPSD_sgozIS-1LDeygvkPzKO19NFJYOQbuHloUxlnP_qdYFzcmD8gEYLXo42ygNO4ZWm8E1vx7FYGhyX6BzCsPMysKhbo3oEXPK4cgLCk9pHcESN291FKYoE4a2fT7kC1wE2DyC5g/ymElx8VVDzd8hyVLoReQqMXYV_8L2qZcWDpDn-5gz0M",
+              "filename": "76570aa4-138c-4881-95a2-a44411be4792_captioned.mp4",
+              "size": 14775703,
+              "type": "video/mp4"
+            }
+          ],
+          "Description (from Coaching Call)": [
+            "Ep1. Building Everyday OS in public"
+          ],
+          "Brand": [
+            "reci9cW5bHd2FSuDG"
+          ],
+          "Record ID (from Brand)": [
+            "reci9cW5bHd2FSuDG"
+          ],
+          "Created": "2025-07-18T01:45:54.000Z",
+          "All Videos URL (from Videos)": [
+            "{\"shared_screen_with_speaker_view\":{\"url\":\"https://minio-api.everydaycreator.org/nca/shared_screen_with_speaker_view_2025-07-07_15-02-55.mp4\",\"width\":2560,\"height\":1440,\"resolution\":\"2560x1440\",\"aspectRatio\":\"1.78\",\"duration\":5190.176,\"fps\":25},\"active_speaker\":{\"url\":\"https://minio-api.everydaycreator.org/nca/active_speaker_2025-07-07_15-02-55.mp4\",\"width\":640,\"height\":360,\"resolution\":\"640x360\",\"aspectRatio\":\"1.78\",\"duration\":5190.176,\"fps\":25},\"shared_screen\":{\"url\":\"https://minio-api.everydaycreator.org/nca/shared_screen_2025-07-07_15-02-55.mp4\",\"width\":2560,\"height\":1440,\"resolution\":\"2560x1440\",\"aspectRatio\":\"1.78\",\"duration\":5190.176,\"fps\":25}}"
+          ],
+          "Clip Type": "talking_head",
+          "Clip Style": "{\"background_analysis\":\"The background features neutral indoor tones, with soft beige walls, a wooden panel section, and a blurred artwork with dark purple and blue hues. Lighting is natural and warm, with no harsh color dominance.\",\"text_color\":\"#00FFD1\",\"stroke_color\":\"#080818\",\"highlight_color\":\"#FFC700\",\"reasoning\":\"Holo Cyan offers excellent visibility against the mostly beige and mid-tone background, while Midnight Grid provides strong stroke contrast for accessibility. Solar Gold adds warmth and brightness for highlights without clashing with the subject or background.\"}",
+          "Last Modified Time": "2025-07-21T00:43:26.000Z",
+          "Analysis": "The opening line—'That's kind of the fun thing about doing this building in public content stuff...'—immediately frames the clip as a personal insight into a modern, experimental approach. It taps into curiosity and the 'behind-the-scenes' appeal, which is compelling for creators and coaches.\n\nTrimmed the opening seconds to start with 'That's kind of the fun thing about doing this building in public content...' to create an immediate, relatable hook. Cut the ending just before the speaker trails off, preserving narrative completeness and avoiding a drop in energy.\n\nAudio is consistent; pacing is conversational and authentic. The trimmed intro removes filler and dead air, making the opening snappy. End point ensures the thought is complete and avoids rambling, resulting in a focused, high-value clip.",
+          "Parent Folder ID": [
+            "17zPmRyIt0vDRCL3quMNvjDlaSZMAuSfY"
+          ],
+          "Folder URL": "https://drive.google.com/drive/u/1/folders/17zPmRyIt0vDRCL3quMNvjDlaSZMAuSfY",
+          "Folder ID": "17zPmRyIt0vDRCL3quMNvjDlaSZMAuSfY",
+          "ID": "S278"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Create Post Record": {
+      "main": [
+        [
+          {
+            "node": "Create Content doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Content Doc": {
+      "main": [
+        [
+          {
+            "node": "Update Post Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copywriter": {
+      "main": [
+        [
+          {
+            "node": "Prepare Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Create Quote Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CopyChief": {
+      "main": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CopyChief",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Get record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Copywriter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Content": {
+      "main": [
+        [
+          {
+            "node": "Is Quote?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Content doc": {
+      "main": [
+        [
+          {
+            "node": "Update Content Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Quote?": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Post Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get record": {
+      "main": [
+        [
+          {
+            "node": "Copywriter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cbbbb706-2cb1-4bc2-b40b-3280e7169444",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b6feeec6266ce5c242c41c4306324474e994ecb1129cd2b23d76b6746965b634"
+  },
+  "id": "h5OHHTLL6FeOdbCM",
+  "tags": []
+}
